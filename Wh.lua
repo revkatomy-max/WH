@@ -178,7 +178,7 @@ local function Startup()
     })
 
     StarterGui:SetCore("SendNotification", {
-        Title = "ITG Webhook Active",
+        Title = "Blox Gank Weebhook Active",
         Text = "Monitoring FishIt server chat...",
         Duration = 5
     })
