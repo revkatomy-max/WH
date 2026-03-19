@@ -23,7 +23,7 @@ local SecretFishList = {
     "Scare", "Queen Crab", "King Crab", "Cryoshade Glider", "Panther Eel",
     "Giant Squid", "Depthseeker Ray", "Robot Kraken", "Mosasaur Shark", "King Jelly",
     "Bone Whale", "Elshark Gran Maja", "Elpirate Gran Maja", "Ancient Whale",
-    "Gladiator Shark", "Ancient Lochness Monster", "Talon Serpent", "Cosmic Mutant Shark",
+    "Gladiator Shark", "Ancient Lochness Monster", "Talon Serpent", "Hacker Shark",
     "ElRetro Gran Maja", "Strawberry Choc Megalodon", "Krampus Shark",
     "Emerald Winter Whale", "Winter Frost Shark", "Icebreaker Whale", "Leviathan",
     "Pirate Megalodon", "Viridis Lurker", "Cursed Kraken", "Ancient Magma Whale",
@@ -51,6 +51,7 @@ local FishImageURL = {
     ["Ancient Lochness Monster"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Ancient%20Lochness%20Monster.png",
     ["Ancient Magma Whale"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Ancient%20Magma%20Whale.png",
     ["Ancient Whale"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Ancient%20Whale.png",
+    ["Blob Shark"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Blob%20Shark.png",
     ["Cosmic Mutant Shark"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Cosmic%20Mutant%20Shark.png",
     ["Cryoshade Glider"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Cryoshade%20Glider.png",
     ["Crystal Crab"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Crystal%20Crab.png",
@@ -206,7 +207,7 @@ local function CheckAndSend(rawMsg)
     if not data then return end
 
     local targetPlayer = Players:FindFirstChild(data.player)
-    local avatarUrl = targetPlayer and ("https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(targetPlayer.UserId) .. "&width=420&height=420&format=png&t=" .. tostring(os.time())) or nil
+    local avatarUrl = targetPlayer and (PROXY .. "/avatar/" .. tostring(targetPlayer.UserId) .. "?t=" .. tostring(os.time())) or nil
 
     -- // CEK LEGENDARY CRYSTALIZED (prioritas tertinggi) //
     local legendaryBase = FindLegendaryCrystal(data.fish)
@@ -300,13 +301,13 @@ local function StartMonitoring()
     for _, p in ipairs(Players:GetPlayers()) do
         WatchForFish(p)
         -- Cache avatar semua player yang sudah ada
-        AvatarCache[p.UserId] = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(p.UserId) .. "&width=420&height=420&format=png&t=" .. tostring(os.time())
+        AvatarCache[p.UserId] = PROXY .. "/avatar/" .. tostring(p.UserId) .. "?t=" .. tostring(os.time())
     end
     Players.PlayerAdded:Connect(function(player)
         if not SCRIPT_ACTIVE then return end
         task.spawn(function()
             task.wait(1)
-            local avatarUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(player.UserId) .. "&width=420&height=420&format=png&t=" .. tostring(os.time())
+            local avatarUrl = PROXY .. "/avatar/" .. tostring(player.UserId) .. "?t=" .. tostring(os.time())
             -- Simpan ke cache supaya bisa dipakai saat leave
             AvatarCache[player.UserId] = avatarUrl
             SendWebhook("✅ PLAYER JOINED SERVER", nil, 65280, {
@@ -322,7 +323,7 @@ local function StartMonitoring()
             local pName = player.Name
             local pId = player.UserId
             -- Ambil dari cache dulu, fallback ke URL langsung
-            local avatarUrl = AvatarCache[pId] or ("https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(pId) .. "&width=420&height=420&format=png&t=" .. tostring(os.time()))
+            local avatarUrl = AvatarCache[pId] or (PROXY .. "/avatar/" .. tostring(pId) .. "?t=" .. tostring(os.time()))
             AvatarCache[pId] = nil -- bersihkan cache
             SendWebhook("👋 PLAYER LEFT SERVER", nil, 16729344, {
                 {["name"] = "Username", ["value"] = "**" .. pName .. "**",                        ["inline"] = true},
