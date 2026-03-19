@@ -84,6 +84,9 @@ local FishImageURL = {
 -- // CACHE TAMBAHAN DARI BACKPACK MONITOR //
 local FishImageCache = {}
 
+-- // CACHE AVATAR PLAYER (simpan sebelum player leave) //
+local AvatarCache = {}
+
 -- // WEBHOOK SENDER //
 local function SendWebhook(title, description, color, fields, imageUrl, thumbUrl)
     local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
@@ -203,7 +206,7 @@ local function CheckAndSend(rawMsg)
     if not data then return end
 
     local targetPlayer = Players:FindFirstChild(data.player)
-    local avatarUrl = targetPlayer and ("https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(targetPlayer.UserId) .. "&width=420&height=420&format=png") or nil
+    local avatarUrl = targetPlayer and ("https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(targetPlayer.UserId) .. "&width=420&height=420&format=png&t=" .. tostring(os.time())) or nil
 
     -- // CEK LEGENDARY CRYSTALIZED (prioritas tertinggi) //
     local legendaryBase = FindLegendaryCrystal(data.fish)
@@ -294,12 +297,18 @@ local function StartMonitoring()
         {["name"] = "Daftar Player", ["value"] = "```\n" .. table.concat(names, ", ") .. "```", ["inline"] = false}
     })
     HookChat()
-    for _, p in ipairs(Players:GetPlayers()) do WatchForFish(p) end
+    for _, p in ipairs(Players:GetPlayers()) do
+        WatchForFish(p)
+        -- Cache avatar semua player yang sudah ada
+        AvatarCache[p.UserId] = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(p.UserId) .. "&width=420&height=420&format=png&t=" .. tostring(os.time())
+    end
     Players.PlayerAdded:Connect(function(player)
         if not SCRIPT_ACTIVE then return end
         task.spawn(function()
             task.wait(1)
-            local avatarUrl = PROXY .. "/avatar/" .. tostring(player.UserId)
+            local avatarUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(player.UserId) .. "&width=420&height=420&format=png&t=" .. tostring(os.time())
+            -- Simpan ke cache supaya bisa dipakai saat leave
+            AvatarCache[player.UserId] = avatarUrl
             SendWebhook("✅ PLAYER JOINED SERVER", nil, 65280, {
                 {["name"] = "Username", ["value"] = "**" .. player.Name .. "**",              ["inline"] = true},
                 {["name"] = "Total",    ["value"] = "👥 " .. tostring(#Players:GetPlayers()), ["inline"] = true}
@@ -312,7 +321,9 @@ local function StartMonitoring()
         task.spawn(function()
             local pName = player.Name
             local pId = player.UserId
-            local avatarUrl = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(pId) .. "&width=420&height=420&format=png"
+            -- Ambil dari cache dulu, fallback ke URL langsung
+            local avatarUrl = AvatarCache[pId] or ("https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(pId) .. "&width=420&height=420&format=png&t=" .. tostring(os.time()))
+            AvatarCache[pId] = nil -- bersihkan cache
             SendWebhook("👋 PLAYER LEFT SERVER", nil, 16729344, {
                 {["name"] = "Username", ["value"] = "**" .. pName .. "**",                        ["inline"] = true},
                 {["name"] = "Total",    ["value"] = "👥 " .. tostring(#Players:GetPlayers() - 1), ["inline"] = true}
