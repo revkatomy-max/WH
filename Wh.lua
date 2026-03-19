@@ -23,7 +23,7 @@ local SecretFishList = {
     "Scare", "Queen Crab", "King Crab", "Cryoshade Glider", "Panther Eel",
     "Giant Squid", "Depthseeker Ray", "Robot Kraken", "Mosasaur Shark", "King Jelly",
     "Bone Whale", "Elshark Gran Maja", "Elpirate Gran Maja", "Ancient Whale",
-    "Gladiator Shark", "Ancient Lochness Monster", "Talon Serpent", "Hacker Shark",
+    "Gladiator Shark", "Ancient Lochness Monster", "Talon Serpent", "Cosmic Mutant Shark",
     "ElRetro Gran Maja", "Strawberry Choc Megalodon", "Krampus Shark",
     "Emerald Winter Whale", "Winter Frost Shark", "Icebreaker Whale", "Leviathan",
     "Pirate Megalodon", "Viridis Lurker", "Cursed Kraken", "Ancient Magma Whale",
