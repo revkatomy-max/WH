@@ -28,14 +28,14 @@ local SecretFishList = {
     "Emerald Winter Whale", "Winter Frost Shark", "Icebreaker Whale", "Leviathan",
     "Pirate Megalodon", "Viridis Lurker", "Cursed Kraken", "Ancient Magma Whale",
     "Rainbow Comet Shark", "Love Nessie", "Broken Heart Nessie",
-    "Mutant Runic Koi",
-    "Mutant Runic Koi",
-    "Mutant Runic Koi",
+    "Mutant Runic Koi", "Ketupat Whale",
+    "Mutant Runic Koi", "Ketupat Whale",
+    "Mutant Runic Koi", "Ketupat Whale",
 }
 
 -- // DATABASE FORGOTTEN TIER //
 local ForgottenList = {
-    "Sea Eater"
+    "Sea Eater", "Thunderzilla"
 }
 
 -- // DATABASE RUBY GEMSTONE //
