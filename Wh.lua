@@ -28,9 +28,9 @@ local SecretFishList = {
     "Emerald Winter Whale", "Winter Frost Shark", "Icebreaker Whale", "Leviathan",
     "Pirate Megalodon", "Viridis Lurker", "Cursed Kraken", "Ancient Magma Whale",
     "Rainbow Comet Shark", "Love Nessie", "Broken Heart Nessie",
-    "Mutant Runic Koi", "Ketupat Whale",
-    "Mutant Runic Koi", "Ketupat Whale",
-    "Mutant Runic Koi", "Ketupat Whale",
+    "Mutant Runic Koi", "Ketupat Whale", "Cosmic Mutant Shark",
+    -- Forgotten Tier
+    "Sea Eater", "Thunderzilla"
 }
 
 -- // DATABASE FORGOTTEN TIER //
@@ -244,15 +244,32 @@ local function CheckAndSend(rawMsg)
     -- // CEK SECRET / FORGOTTEN FISH //
     local baseName, mutasi = FindSecretFish(data.fish)
     if not baseName then return end
-    -- Cek database URL dulu, fallback ke cache backpack
     local imageUrl = FishImageURL[baseName] or (FishImageCache[baseName] and (PROXY .. "/asset/" .. FishImageCache[baseName])) or nil
     local fishLabel = "**" .. data.fish .. "**"
     if mutasi then fishLabel = "**" .. data.fish .. "** *(mutasi: " .. baseName .. ")*" end
-    SendWebhook("🚨 SECRET FISH DETECTED!", nil, 1752220, {
-        {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
-        {["name"] = "Ikan",   ["value"] = fishLabel,                   ["inline"] = true},
-        {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
-    }, imageUrl, avatarUrl)
+
+    -- Cek apakah Forgotten Tier
+    local isForgotten = false
+    for _, name in ipairs(ForgottenList) do
+        if string.lower(baseName) == string.lower(name) then
+            isForgotten = true
+            break
+        end
+    end
+
+    if isForgotten then
+        SendWebhook("🌟 FORGOTTEN TIER DETECTED!", nil, 16777215, {
+            {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
+            {["name"] = "Ikan",   ["value"] = fishLabel,                   ["inline"] = true},
+            {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
+        }, imageUrl, avatarUrl)
+    else
+        SendWebhook("🚨 SECRET FISH DETECTED!", nil, 1752220, {
+            {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
+            {["name"] = "Ikan",   ["value"] = fishLabel,                   ["inline"] = true},
+            {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
+        }, imageUrl, avatarUrl)
+    end
 end
 
 -- // BACKPACK MONITOR //
