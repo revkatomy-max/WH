@@ -416,7 +416,7 @@ local function StartMonitoring()
     -- // KIRIM STATS SEMUA PLAYER TIAP 10 MENIT //
     task.spawn(function()
         while SCRIPT_ACTIVE do
-            task.wait(600) -- 10 menit
+            task.wait(1200) -- 20 menit
             if not SCRIPT_ACTIVE then break end
             for _, p in ipairs(Players:GetPlayers()) do
                 local uid = p.UserId
@@ -440,7 +440,7 @@ local function StartMonitoring()
 
                 local avatarUrl = AvatarCache[uid] or (PROXY .. "/avatar/" .. tostring(uid) .. "?t=" .. tostring(os.time()))
 
-                SendStatsWebhook("📊 PLAYER STATS (10 Menit)", nil, 9807270, {
+                SendStatsWebhook("📊 PLAYER STATS (20 Menit)", nil, 9807270, {
                     {["name"] = "👤 Username",      ["value"] = "**" .. p.Name .. "**",               ["inline"] = true},
                     {["name"] = "⏱️ Durasi Sesi",   ["value"] = durationStr,                           ["inline"] = true},
                     {["name"] = "🐟 Total Catch",   ["value"] = tostring(stats.catchCount) .. " ikan", ["inline"] = true},
@@ -458,13 +458,24 @@ local function StartMonitoring()
         AvatarCache[p.UserId] = PROXY .. "/avatar/" .. tostring(p.UserId) .. "?t=" .. tostring(os.time())
         PlayerStats[p.UserId] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = p.Name }
         PlayerNameToId[string.lower(p.Name)] = p.UserId
+        PlayerNameToId[string.lower(p.DisplayName)] = p.UserId
     end
     Players.PlayerAdded:Connect(function(player)
         if not SCRIPT_ACTIVE then return end
+
+        -- Batalkan timer "tidak kembali" LANGSUNG saat player join
+        if LeaveTimers[player.UserId] then
+            LeaveTimers[player.UserId] = nil
+        end
+
+        -- Init stats
+        PlayerStats[player.UserId] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = player.Name }
+        PlayerNameToId[string.lower(player.Name)] = player.UserId
+        PlayerNameToId[string.lower(player.DisplayName)] = player.UserId
+
         task.spawn(function()
             task.wait(1)
             local avatarUrl = PROXY .. "/avatar/" .. tostring(player.UserId) .. "?t=" .. tostring(os.time())
-            -- Simpan ke cache supaya bisa dipakai saat leave
             AvatarCache[player.UserId] = avatarUrl
             SendWebhook("✅ PLAYER JOINED SERVER", nil, 65280, {
                 {["name"] = "Username", ["value"] = "**" .. player.Name .. "**",              ["inline"] = true},
@@ -486,6 +497,10 @@ local function StartMonitoring()
         AvatarCache[pId] = nil
         PlayerStats[pId] = nil
         PlayerNameToId[string.lower(pName)] = nil
+        -- Cari dan hapus display name mapping
+        for k, v in pairs(PlayerNameToId) do
+            if v == pId then PlayerNameToId[k] = nil end
+        end
 
         -- Hitung durasi sesi
         local duration = os.time() - stats.joinTime
