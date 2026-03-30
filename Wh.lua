@@ -103,8 +103,10 @@ local AvatarCache = {}
 local LeaveTimers = {}
 
 -- // PLAYER STATS TRACKER //
--- key = userId, value = { catchCount, secretList, joinTime, lastFishTime }
+-- key = userId, value = { catchCount, secretList, joinTime, lastFishTime, name }
 local PlayerStats = {}
+-- key = playerName (lowercase), value = userId
+local PlayerNameToId = {}
 
 -- // STATS WEBHOOK SENDER //
 local function SendStatsWebhook(title, description, color, fields, imageUrl, thumbUrl)
@@ -160,6 +162,41 @@ local function SendWebhook(title, description, color, fields, imageUrl, thumbUrl
             })
         end)
     end)
+end
+
+-- // CARI PLAYER FLEKSIBEL //
+local function FindPlayer(name)
+    -- Exact match dulu
+    local p = Players:FindFirstChild(name)
+    if p then return p end
+    -- Case insensitive match
+    local lname = string.lower(name)
+    for _, player in ipairs(Players:GetPlayers()) do
+        if string.lower(player.Name) == lname then return player end
+    end
+    -- Partial match
+    for _, player in ipairs(Players:GetPlayers()) do
+        if string.find(string.lower(player.Name), lname, 1, true) then return player end
+    end
+    return nil
+end
+
+-- // FIND PLAYER (toleran nama) //
+local function FindPlayer(name)
+    -- Exact match dulu
+    local p = Players:FindFirstChild(name)
+    if p then return p end
+    -- Case insensitive match
+    local lower = string.lower(name)
+    for _, player in ipairs(Players:GetPlayers()) do
+        if string.lower(player.Name) == lower then return player end
+    end
+    -- Partial match (nama di chat mungkin terpotong)
+    for _, player in ipairs(Players:GetPlayers()) do
+        if string.find(string.lower(player.Name), lower, 1, true) then return player end
+        if string.find(lower, string.lower(player.Name), 1, true) then return player end
+    end
+    return nil
 end
 
 -- // STRIP HTML TAGS //
@@ -250,14 +287,14 @@ local function CheckAndSend(rawMsg)
     local data = ParseChat(rawMsg)
     if not data then return end
 
-    local targetPlayer = Players:FindFirstChild(data.player)
+    local targetPlayer = FindPlayer(data.player)
     local avatarUrl = targetPlayer and (PROXY .. "/avatar/" .. tostring(targetPlayer.UserId) .. "?t=" .. tostring(os.time())) or nil
 
-    -- Track stats player
-    if targetPlayer then
-        local uid = targetPlayer.UserId
+    -- Track stats by name (lebih reliable dari userId)
+    local uid = targetPlayer and targetPlayer.UserId or PlayerNameToId[string.lower(data.player)]
+    if uid then
         if not PlayerStats[uid] then
-            PlayerStats[uid] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil }
+            PlayerStats[uid] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = data.player }
         end
         PlayerStats[uid].catchCount = PlayerStats[uid].catchCount + 1
         PlayerStats[uid].lastFishTime = os.time()
@@ -305,12 +342,9 @@ local function CheckAndSend(rawMsg)
     end
 
     -- Tambah ke list secret player
-    if targetPlayer then
-        local uid = targetPlayer.UserId
-        if PlayerStats[uid] then
-            local existing = PlayerStats[uid].secretList[baseName] or 0
-            PlayerStats[uid].secretList[baseName] = existing + 1
-        end
+    if uid and PlayerStats[uid] then
+        local existing = PlayerStats[uid].secretList[baseName] or 0
+        PlayerStats[uid].secretList[baseName] = existing + 1
     end
 
     if isForgotten then
@@ -422,7 +456,8 @@ local function StartMonitoring()
     for _, p in ipairs(Players:GetPlayers()) do
         WatchForFish(p)
         AvatarCache[p.UserId] = PROXY .. "/avatar/" .. tostring(p.UserId) .. "?t=" .. tostring(os.time())
-        PlayerStats[p.UserId] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil }
+        PlayerStats[p.UserId] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = p.Name }
+        PlayerNameToId[string.lower(p.Name)] = p.UserId
     end
     Players.PlayerAdded:Connect(function(player)
         if not SCRIPT_ACTIVE then return end
@@ -450,6 +485,7 @@ local function StartMonitoring()
 
         AvatarCache[pId] = nil
         PlayerStats[pId] = nil
+        PlayerNameToId[string.lower(pName)] = nil
 
         -- Hitung durasi sesi
         local duration = os.time() - stats.joinTime
