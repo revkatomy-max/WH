@@ -10,7 +10,8 @@ local TweenService = game:GetService("TweenService")
 
 -- // CONFIGURATION //
 local WEBHOOK_URL = ""
-local WEBHOOK_STATS = "https://discord.com/api/webhooks/1488003996026273893/4v2Z-a838D17SL7qn03o8s2PKX3oN2quVIui1g4GmYjrIkgnONbtQUlOGqxkLQLD5eIm"
+local WEBHOOK_STATS = ""
+local WEBHOOK_FISH = "" -- khusus secret fish
 local WEBHOOK_AVATAR = "" -- isi dengan URL gambar PNG kamu
 local PROXY = "https://square-haze-a007.remediashop.workers.dev"
 local SCRIPT_ACTIVE = false
@@ -130,6 +131,27 @@ local function SendStatsWebhook(title, description, color, fields, imageUrl, thu
                 Headers = {["Content-Type"] = "application/json"},
                 Body = HttpService:JSONEncode({["embeds"] = {embed}})
             })
+        end)
+    end)
+end
+
+-- // FISH WEBHOOK SENDER //
+local function SendFishWebhook(title, description, color, fields, imageUrl, thumbUrl)
+    local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+    if not requestFunc then return end
+    local url = (WEBHOOK_FISH ~= "") and WEBHOOK_FISH or WEBHOOK_URL
+    if url == "" then return end
+    local embed = {
+        ["title"] = title, ["description"] = description, ["color"] = color,
+        ["fields"] = fields,
+        ["footer"] = {["text"] = "BLOX Gank Webhook | " .. os.date("%X")},
+        ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
+    }
+    if imageUrl then embed["image"] = {["url"] = imageUrl} end
+    if thumbUrl then embed["thumbnail"] = {["url"] = thumbUrl} end
+    task.spawn(function()
+        pcall(function()
+            requestFunc({Url = url, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = HttpService:JSONEncode({["embeds"] = {embed}})})
         end)
     end)
 end
@@ -304,7 +326,7 @@ local function CheckAndSend(rawMsg)
     local legendaryBase = FindLegendaryCrystal(data.fish)
     if legendaryBase then
         local imageUrl = FishImageURL[legendaryBase] or (FishImageCache[legendaryBase] and (PROXY .. "/asset/" .. FishImageCache[legendaryBase])) or nil
-        SendWebhook("💎 CRYSTALIZED LEGENDARY!", nil, 3407871, {
+        SendFishWebhook("💎 CRYSTALIZED LEGENDARY!", nil, 3407871, {
             {["name"] = "Pemain",   ["value"] = "**" .. data.player .. "**",  ["inline"] = true},
             {["name"] = "Ikan",     ["value"] = "**" .. data.fish .. "**",    ["inline"] = true},
             {["name"] = "Mutasi",   ["value"] = "✨ Crystalized",             ["inline"] = true},
@@ -317,7 +339,7 @@ local function CheckAndSend(rawMsg)
     local rubyBase = FindRuby(data.fish)
     if rubyBase then
         local imageUrl = FishImageURL[rubyBase] or (FishImageCache[rubyBase] and (PROXY .. "/asset/" .. FishImageCache[rubyBase])) or nil
-        SendWebhook("💎 RUBY GEMSTONE!", nil, 16753920, {
+        SendFishWebhook("💎 RUBY GEMSTONE!", nil, 16753920, {
             {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
             {["name"] = "Item",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
             {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
@@ -348,13 +370,13 @@ local function CheckAndSend(rawMsg)
     end
 
     if isForgotten then
-        SendWebhook("🌟 FORGOTTEN TIER DETECTED!", nil, 16777215, {
+        SendFishWebhook("🌟 FORGOTTEN TIER DETECTED!", nil, 16777215, {
             {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
             {["name"] = "Ikan",   ["value"] = fishLabel,                   ["inline"] = true},
             {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
         }, imageUrl, avatarUrl)
     else
-        SendWebhook("🚨 SECRET FISH DETECTED!", nil, 1752220, {
+        SendFishWebhook("🚨 SECRET FISH DETECTED!", nil, 1752220, {
             {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
             {["name"] = "Ikan",   ["value"] = fishLabel,                   ["inline"] = true},
             {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
@@ -563,7 +585,7 @@ local function CreateUI()
     -- Main Frame
     local frame = Instance.new("Frame")
     frame.Name = "Main"
-    frame.Size = UDim2.new(0, 300, 0, 180)
+    frame.Size = UDim2.new(0, 300, 0, 280)
     frame.Position = UDim2.new(0.5, -150, 0.5, -90)
     frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     frame.BorderSizePixel = 0
@@ -626,7 +648,7 @@ local function CreateUI()
 
     -- Minimize logic
     local isMinimized = false
-    local fullSize = UDim2.new(0, 300, 0, 180)
+    local fullSize = UDim2.new(0, 300, 0, 280)
     local miniSize = UDim2.new(0, 300, 0, 36)
 
     minBtn.MouseButton1Click:Connect(function()
@@ -691,7 +713,7 @@ local function CreateUI()
     -- Status dot + label
     local statusDot = Instance.new("Frame")
     statusDot.Size = UDim2.new(0, 8, 0, 8)
-    statusDot.Position = UDim2.new(0, 16, 0, 54)
+    statusDot.Position = UDim2.new(0, 16, 0, 46)
     statusDot.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
     statusDot.BorderSizePixel = 0
     statusDot.Parent = frame
@@ -700,7 +722,7 @@ local function CreateUI()
     local statusLabel = Instance.new("TextLabel")
     statusLabel.Text = "Tidak Aktif"
     statusLabel.Size = UDim2.new(1, -40, 0, 20)
-    statusLabel.Position = UDim2.new(0, 30, 0, 46)
+    statusLabel.Position = UDim2.new(0, 30, 0, 38)
     statusLabel.BackgroundTransparency = 1
     statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
     statusLabel.Font = Enum.Font.Gotham
@@ -708,33 +730,57 @@ local function CreateUI()
     statusLabel.TextXAlignment = Enum.TextXAlignment.Left
     statusLabel.Parent = frame
 
-    -- Webhook input
-    local inputBox = Instance.new("TextBox")
-    inputBox.PlaceholderText = "Paste Discord Webhook URL..."
-    inputBox.Size = UDim2.new(1, -24, 0, 34)
-    inputBox.Position = UDim2.new(0, 12, 0, 74)
-    inputBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    inputBox.TextColor3 = Color3.fromRGB(220, 220, 220)
-    inputBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
-    inputBox.Font = Enum.Font.Gotham
-    inputBox.TextSize = 10
-    inputBox.ClearTextOnFocus = false
-    inputBox.BorderSizePixel = 0
-    inputBox.Text = ""
-    inputBox.TextXAlignment = Enum.TextXAlignment.Left
-    inputBox.ClipsDescendants = true
-    inputBox.Parent = frame
-    local inputCorner = Instance.new("UICorner", inputBox)
-    inputCorner.CornerRadius = UDim.new(0, 6)
-    local inputPad = Instance.new("UIPadding", inputBox)
-    inputPad.PaddingLeft = UDim.new(0, 8)
-    inputPad.PaddingRight = UDim.new(0, 8)
+    local function makeInput(placeholder, yPos)
+        local box = Instance.new("TextBox")
+        box.PlaceholderText = placeholder
+        box.Size = UDim2.new(1, -24, 0, 30)
+        box.Position = UDim2.new(0, 12, 0, yPos)
+        box.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        box.TextColor3 = Color3.fromRGB(220, 220, 220)
+        box.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
+        box.Font = Enum.Font.Gotham
+        box.TextSize = 10
+        box.ClearTextOnFocus = false
+        box.BorderSizePixel = 0
+        box.Text = ""
+        box.TextXAlignment = Enum.TextXAlignment.Left
+        box.ClipsDescendants = true
+        box.Parent = frame
+        Instance.new("UICorner", box).CornerRadius = UDim.new(0, 6)
+        local pad = Instance.new("UIPadding", box)
+        pad.PaddingLeft = UDim.new(0, 8)
+        pad.PaddingRight = UDim.new(0, 8)
+        return box
+    end
+
+    local function makeLabel(text, yPos)
+        local lbl = Instance.new("TextLabel")
+        lbl.Text = text
+        lbl.Size = UDim2.new(1, -24, 0, 14)
+        lbl.Position = UDim2.new(0, 12, 0, yPos)
+        lbl.BackgroundTransparency = 1
+        lbl.TextColor3 = Color3.fromRGB(130, 130, 130)
+        lbl.Font = Enum.Font.Gotham
+        lbl.TextSize = 10
+        lbl.TextXAlignment = Enum.TextXAlignment.Left
+        lbl.Parent = frame
+        return lbl
+    end
+
+    makeLabel("👋 Webhook Join / Leave", 58)
+    local inputJoin = makeInput("Paste webhook join/leave...", 72)
+
+    makeLabel("🚨 Webhook Secret Fish", 110)
+    local inputFish = makeInput("Paste webhook secret fish...", 124)
+
+    makeLabel("📊 Webhook Stats", 162)
+    local inputStats = makeInput("Paste webhook stats...", 176)
 
     -- Start button
     local startBtn = Instance.new("TextButton")
     startBtn.Text = "START MONITORING"
     startBtn.Size = UDim2.new(1, -24, 0, 34)
-    startBtn.Position = UDim2.new(0, 12, 0, 118)
+    startBtn.Position = UDim2.new(0, 12, 0, 216)
     startBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
     startBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     startBtn.Font = Enum.Font.GothamBold
@@ -753,9 +799,13 @@ local function CreateUI()
     startBtn.MouseButton1Click:Connect(function()
         if SCRIPT_ACTIVE then return end
 
-        local webhookText = inputBox.Text
-        if not webhookText:find("discord.com/api/webhooks") then
-            startBtn.Text = "❌ WEBHOOK INVALID!"
+        local joinText = inputJoin.Text
+        local fishText = inputFish.Text
+        local statsText = inputStats.Text
+
+        -- Minimal webhook join harus diisi
+        if not joinText:find("discord.com/api/webhooks") then
+            startBtn.Text = "❌ WEBHOOK JOIN INVALID!"
             startBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
             task.wait(2)
             startBtn.Text = "START MONITORING"
@@ -763,7 +813,9 @@ local function CreateUI()
             return
         end
 
-        WEBHOOK_URL = webhookText
+        WEBHOOK_URL = joinText
+        if fishText:find("discord.com/api/webhooks") then WEBHOOK_FISH = fishText end
+        if statsText:find("discord.com/api/webhooks") then WEBHOOK_STATS = statsText end
         SCRIPT_ACTIVE = true
 
         -- Update UI
@@ -772,7 +824,9 @@ local function CreateUI()
         statusLabel.TextColor3 = Color3.fromRGB(0, 220, 100)
         startBtn.Text = "✅ MONITORING AKTIF"
         startBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        inputBox.TextEditable = false
+        inputJoin.TextEditable = false
+        inputFish.TextEditable = false
+        inputStats.TextEditable = false
 
         StartMonitoring()
     end)
