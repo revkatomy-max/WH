@@ -12,9 +12,11 @@ local TweenService = game:GetService("TweenService")
 local WEBHOOK_URL = ""
 local WEBHOOK_STATS = ""
 local WEBHOOK_FISH = "" -- khusus secret fish
+local DISCORD_ROLE_ID = "" -- role ID untuk di-tag
 local WEBHOOK_AVATAR = "" -- isi dengan URL gambar PNG kamu
 local PROXY = "https://square-haze-a007.remediashop.workers.dev"
 local SCRIPT_ACTIVE = false
+local RARE_THRESHOLD = 1000000 -- alert kalau chance >= 1 in 1M
 
 -- // DATABASE NAMA SECRET FISH //
 local SecretFishList = {
@@ -283,6 +285,20 @@ local function GetFishImageId(item)
     return nil
 end
 
+-- // CONVERT CHANCE STRING KE ANGKA //
+-- "5K" -> 5000, "1M" -> 1000000, "500" -> 500
+local function ParseChanceNumber(chanceStr)
+    if not chanceStr then return 0 end
+    local s = chanceStr:match("^%s*(.-)%s*$"):upper()
+    local num = tonumber(s:match("^([%d%.]+)"))
+    if not num then return 0 end
+    if s:find("B") then return num * 1000000000
+    elseif s:find("M") then return num * 1000000
+    elseif s:find("K") then return num * 1000
+    end
+    return num
+end
+
 -- // PARSE CHAT SERVER //
 local function ParseChat(rawMsg)
     local msg = StripTags(rawMsg)
@@ -296,10 +312,15 @@ local function ParseChat(rawMsg)
     playerName = playerName:match("%[%a+%]:%s*(.+)") or playerName
     playerName = playerName:match("^%s*(.-)%s*$") or playerName
     weight = weight:match("^%s*(.-)%s*$") or weight
+
+    -- Parse chance: "with a 1 in 5K chance"
+    local chanceStr = rawMsg:match("with a 1 in%s+([%d%.%a]+)%s+chance")
+    local chanceNum = ParseChanceNumber(chanceStr)
+
     fishFull = fishFull:match("^(.-)%s+with a 1 in") or fishFull
     fishFull = fishFull:match("^(.-)%s*[!%.]?$") or fishFull
     fishFull = fishFull:match("^%s*(.-)%s*$") or fishFull
-    return { player = playerName, fish = fishFull, weight = weight }
+    return { player = playerName, fish = fishFull, weight = weight, chance = chanceStr or "N/A", chanceNum = chanceNum }
 end
 
 -- // PROSES PESAN CHAT SERVER //
@@ -311,6 +332,16 @@ local function CheckAndSend(rawMsg)
 
     local targetPlayer = FindPlayer(data.player)
     local avatarUrl = targetPlayer and (PROXY .. "/avatar/" .. tostring(targetPlayer.UserId) .. "?t=" .. tostring(os.time())) or nil
+
+    -- // RARE CATCH ALERT //
+    if data.chanceNum and data.chanceNum >= RARE_THRESHOLD then
+        SendFishWebhook("🌠 RARE CATCH ALERT!", nil, 16750848, {
+            {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**",            ["inline"] = true},
+            {["name"] = "Ikan",    ["value"] = "**" .. data.fish .. "**",              ["inline"] = true},
+            {["name"] = "Chance",  ["value"] = "🎲 **1 in " .. data.chance .. "**",   ["inline"] = true},
+            {["name"] = "Berat",   ["value"] = data.weight,                            ["inline"] = true},
+        }, nil, avatarUrl)
+    end
 
     -- Track stats by name (lebih reliable dari userId)
     local uid = targetPlayer and targetPlayer.UserId or PlayerNameToId[string.lower(data.player)]
@@ -371,9 +402,10 @@ local function CheckAndSend(rawMsg)
 
     if isForgotten then
         SendFishWebhook("🌟 FORGOTTEN TIER DETECTED!", nil, 16777215, {
-            {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
-            {["name"] = "Ikan",   ["value"] = fishLabel,                   ["inline"] = true},
-            {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
+            {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
+            {["name"] = "Ikan",    ["value"] = fishLabel,                   ["inline"] = true},
+            {["name"] = "Berat",   ["value"] = data.weight,                 ["inline"] = true},
+            {["name"] = "Chance",  ["value"] = "1 in " .. data.chance,     ["inline"] = true},
         }, imageUrl, avatarUrl)
     else
         SendFishWebhook("🚨 SECRET FISH DETECTED!", nil, 1752220, {
@@ -585,7 +617,7 @@ local function CreateUI()
     -- Main Frame
     local frame = Instance.new("Frame")
     frame.Name = "Main"
-    frame.Size = UDim2.new(0, 300, 0, 280)
+    frame.Size = UDim2.new(0, 300, 0, 320)
     frame.Position = UDim2.new(0.5, -150, 0.5, -90)
     frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     frame.BorderSizePixel = 0
@@ -648,7 +680,7 @@ local function CreateUI()
 
     -- Minimize logic
     local isMinimized = false
-    local fullSize = UDim2.new(0, 300, 0, 280)
+    local fullSize = UDim2.new(0, 300, 0, 320)
     local miniSize = UDim2.new(0, 300, 0, 36)
 
     minBtn.MouseButton1Click:Connect(function()
@@ -776,11 +808,14 @@ local function CreateUI()
     makeLabel("📊 Webhook Stats", 162)
     local inputStats = makeInput("Paste webhook stats...", 176)
 
+    makeLabel("🔔 Discord Role ID (opsional)", 214)
+    local inputRole = makeInput("Masukkan Role ID...", 228)
+
     -- Start button
     local startBtn = Instance.new("TextButton")
     startBtn.Text = "START MONITORING"
     startBtn.Size = UDim2.new(1, -24, 0, 34)
-    startBtn.Position = UDim2.new(0, 12, 0, 216)
+    startBtn.Position = UDim2.new(0, 12, 0, 266)
     startBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
     startBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     startBtn.Font = Enum.Font.GothamBold
@@ -816,6 +851,8 @@ local function CreateUI()
         WEBHOOK_URL = joinText
         if fishText:find("discord.com/api/webhooks") then WEBHOOK_FISH = fishText end
         if statsText:find("discord.com/api/webhooks") then WEBHOOK_STATS = statsText end
+        local roleText = inputRole.Text:match("^%s*(.-)%s*$")
+        if roleText ~= "" then DISCORD_ROLE_ID = roleText end
         SCRIPT_ACTIVE = true
 
         -- Update UI
@@ -827,6 +864,7 @@ local function CreateUI()
         inputJoin.TextEditable = false
         inputFish.TextEditable = false
         inputStats.TextEditable = false
+        inputRole.TextEditable = false
 
         StartMonitoring()
     end)
