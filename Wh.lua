@@ -11,8 +11,8 @@ local TweenService = game:GetService("TweenService")
 -- // CONFIGURATION //
 local WEBHOOK_URL = ""
 local WEBHOOK_STATS = ""
-local WEBHOOK_FISH = "" -- khusus secret fish
-local DISCORD_ROLE_ID = "" -- role ID untuk di-tag
+local WEBHOOK_FISH = "https://discord.com/api/webhooks/1488485636024307784/s0tXIAmlnx2OosodZm6FiC3Ny9YT4PzcIDFqUeHXymdVvcKOyuIRVxLPcxE7lsK1IZgb" -- khusus secret fish
+local DISCORD_ROLE_ID = "1489557585764810802" -- role ID untuk di-tag
 local WEBHOOK_AVATAR = "" -- isi dengan URL gambar PNG kamu
 local PROXY = "https://square-haze-a007.remediashop.workers.dev"
 local SCRIPT_ACTIVE = false
@@ -41,6 +41,64 @@ local SecretFishList = {
 -- // DATABASE FORGOTTEN TIER //
 local ForgottenList = {
     "Sea Eater", "Thunderzilla"
+}
+
+
+-- // DATABASE CHANCE IKAN SECRET //
+local FishChanceData = {
+    ["Crystal Crab"] = "1 in 750K",
+    ["Orca"] = "1 in 1.5M",
+    ["Zombie Shark"] = "1 in 250K",
+    ["Zombie Megalodon"] = "1 in 4M",
+    ["Dead Zombie Shark"] = "1 in 500K",
+    ["Blob Shark"] = "1 in 250K",
+    ["Ghost Shark"] = "1 in 500K",
+    ["Skeleton Narwhal"] = "1 in 600K",
+    ["Ghost Worm Fish"] = "1 in 1M",
+    ["Worm Fish"] = "1 in 3M",
+    ["Megalodon"] = "1 in 4M",
+    ["1x1x1x1 Comet Shark"] = "1 in 4M",
+    ["Bloodmoon Whale"] = "1 in 5M",
+    ["Lochness Monster"] = "1 in 3M",
+    ["Monster Shark"] = "1 in 2.5M",
+    ["Eerie Shark"] = "1 in 250K",
+    ["Great Whale"] = "1 in 900K",
+    ["Frostborn Shark"] = "1 in 500K",
+    ["Thin Armored Shark"] = "1 in 300K",
+    ["Scare"] = "1 in 3M",
+    ["Queen Crab"] = "1 in 800K",
+    ["King Crab"] = "1 in 1.2M",
+    ["Cryoshade Glider"] = "1 in 450K",
+    ["Panther Eel"] = "1 in 750K",
+    ["Giant Squid"] = "1 in 800K",
+    ["Depthseeker Ray"] = "1 in 1.2M",
+    ["Robot Kraken"] = "1 in 3.5M",
+    ["Mosasaur Shark"] = "1 in 800K",
+    ["King Jelly"] = "1 in 1.5M",
+    ["Bone Whale"] = "1 in 2M",
+    ["Elshark Gran Maja"] = "1 in 4M",
+    ["Elpirate Gran Maja"] = "1 in 4M",
+    ["ElRetro Gran Maja"] = "1 in 4M",
+    ["Ancient Whale"] = "1 in 2.75M",
+    ["Gladiator Shark"] = "1 in 1M",
+    ["Ancient Lochness Monster"] = "1 in 3M",
+    ["Talon Serpent"] = "1 in 3M",
+    ["Hacker Shark"] = "1 in 2M",
+    ["Strawberry Choc Megalodon"] = "1 in 4M",
+    ["Krampus Shark"] = "1 in 1M",
+    ["Emerald Winter Whale"] = "1 in 1.5M",
+    ["Winter Frost Shark"] = "1 in 3M",
+    ["Icebreaker Whale"] = "1 in 4M",
+    ["Cursed Kraken"] = "1 in 3M",
+    ["Pirate Megalodon"] = "1 in 4M",
+    ["Leviathan"] = "1 in 5M",
+    ["Viridis Lurker"] = "1 in 1.4M",
+    ["Ancient Magma Whale"] = "1 in 5M",
+    ["Mutant Runic Koi"] = "1 in ??",
+    ["Cosmic Mutant Shark"] = "1 in 2M",
+    ["Bonemaw Tyrant"] = "1 in 2.5M",
+    ["Sea Eater"] = "1 in 25M",
+    ["Thunderzilla"] = "1 in 30M",
 }
 
 -- // DATABASE RUBY GEMSTONE //
