@@ -16,7 +16,6 @@ local DISCORD_ROLE_ID = "1489557585764810802" -- role ID untuk di-tag
 local WEBHOOK_AVATAR = "" -- isi dengan URL gambar PNG kamu
 local PROXY = "https://square-haze-a007.remediashop.workers.dev"
 local SCRIPT_ACTIVE = false
-local RARE_THRESHOLD = 1000000 -- alert kalau chance >= 1 in 1M
 
 -- // DATABASE NAMA SECRET FISH //
 local SecretFishList = {
@@ -96,7 +95,7 @@ local FishChanceData = {
     ["Ancient Magma Whale"] = "1 in 5M",
     ["Mutant Runic Koi"] = "1 in ??",
     ["Cosmic Mutant Shark"] = "1 in 2M",
-    ["Bonemaw Tyrant"] = "1 in 2.5M",
+    ["Bonemaw Tyrant"] = "1 in 2.9M",
     ["Sea Eater"] = "1 in 25M",
     ["Thunderzilla"] = "1 in 30M",
 }
@@ -390,16 +389,6 @@ local function CheckAndSend(rawMsg)
 
     local targetPlayer = FindPlayer(data.player)
     local avatarUrl = targetPlayer and (PROXY .. "/avatar/" .. tostring(targetPlayer.UserId) .. "?t=" .. tostring(os.time())) or nil
-
-    -- // RARE CATCH ALERT //
-    if data.chanceNum and data.chanceNum >= RARE_THRESHOLD then
-        SendFishWebhook("🌠 RARE CATCH ALERT!", nil, 16750848, {
-            {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**",            ["inline"] = true},
-            {["name"] = "Ikan",    ["value"] = "**" .. data.fish .. "**",              ["inline"] = true},
-            {["name"] = "Chance",  ["value"] = "🎲 **1 in " .. data.chance .. "**",   ["inline"] = true},
-            {["name"] = "Berat",   ["value"] = data.weight,                            ["inline"] = true},
-        }, nil, avatarUrl)
-    end
 
     -- Track stats by name (lebih reliable dari userId)
     local uid = targetPlayer and targetPlayer.UserId or PlayerNameToId[string.lower(data.player)]
