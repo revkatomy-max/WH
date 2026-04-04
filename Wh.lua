@@ -95,7 +95,7 @@ local FishChanceData = {
     ["Ancient Magma Whale"] = "1 in 5M",
     ["Mutant Runic Koi"] = "1 in ??",
     ["Cosmic Mutant Shark"] = "1 in 2M",
-    ["Bonemaw Tyrant"] = "1 in 2.9M",
+    ["Bonemaw Tyrant"] = "1 in 2.5M",
     ["Sea Eater"] = "1 in 25M",
     ["Thunderzilla"] = "1 in 30M",
 }
@@ -447,18 +447,28 @@ local function CheckAndSend(rawMsg)
         PlayerStats[uid].secretList[baseName] = existing + 1
     end
 
+    -- Ambil chance dari database resmi
+    local chanceInfo = FishChanceData[baseName] or "Unknown"
+
+    -- Pisah nama ikan dan mutasi jadi 2 field supaya tidak melebar
+    local ikanField = "**" .. data.fish .. "**"
+    local mutasiField = mutasi and ("*" .. mutasi .. "*") or "-"
+
     if isForgotten then
         SendFishWebhook("🌟 FORGOTTEN TIER DETECTED!", nil, 16777215, {
             {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
-            {["name"] = "Ikan",    ["value"] = fishLabel,                   ["inline"] = true},
+            {["name"] = "Ikan",    ["value"] = ikanField,                   ["inline"] = true},
+            {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
             {["name"] = "Berat",   ["value"] = data.weight,                 ["inline"] = true},
-            {["name"] = "Chance",  ["value"] = "1 in " .. data.chance,     ["inline"] = true},
+            {["name"] = "Chance",  ["value"] = "🎲 " .. chanceInfo,         ["inline"] = true},
         }, imageUrl, avatarUrl)
     else
         SendFishWebhook("🚨 SECRET FISH DETECTED!", nil, 1752220, {
-            {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
-            {["name"] = "Ikan",   ["value"] = fishLabel,                   ["inline"] = true},
-            {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
+            {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
+            {["name"] = "Ikan",    ["value"] = ikanField,                   ["inline"] = true},
+            {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
+            {["name"] = "Berat",   ["value"] = data.weight,                 ["inline"] = true},
+            {["name"] = "Chance",  ["value"] = "🎲 " .. chanceInfo,         ["inline"] = true},
         }, imageUrl, avatarUrl)
     end
 end
