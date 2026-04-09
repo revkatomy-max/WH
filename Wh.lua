@@ -100,6 +100,12 @@ local FishChanceData = {
     ["Thunderzilla"] = "1 in 30M",
 }
 
+-- // DATABASE IKAN CANTIK //
+local CantikList = {
+    "Sapphyra", "Captain Pufferfish", "Runic Abyssal Shark",
+    "Runebound Crocodile", "Cute Dumbo"
+}
+
 -- // DATABASE RUBY GEMSTONE //
 local RubyList = { "Ruby" }
 
@@ -288,18 +294,46 @@ end
 -- // CEK SECRET FISH + SUPPORT MUTASI //
 local function FindSecretFish(fishName)
     local lower = string.lower(fishName)
+
+    -- PASS 1: Exact match dulu (prioritas tertinggi)
     for _, baseName in ipairs(SecretFishList) do
-        if string.find(lower, string.lower(baseName), 1, true) then
-            local s = string.find(lower, string.lower(baseName), 1, true)
+        if lower == string.lower(baseName) then
+            return baseName, nil
+        end
+    end
+
+    -- PASS 2: Cari baseName yang paling panjang match (hindari "Megalodon" match "Pirate Megalodon")
+    local bestBase = nil
+    local bestLen = 0
+    local bestMutasi = nil
+    for _, baseName in ipairs(SecretFishList) do
+        local s = string.find(lower, string.lower(baseName), 1, true)
+        if s then
             local mutasi = nil
-            if s and s > 1 then
+            if s > 1 then
                 mutasi = fishName:sub(1, s - 1):match("^%s*(.-)%s*$")
                 if mutasi == "" then mutasi = nil end
             end
-            return baseName, mutasi
+            -- Pilih baseName yang paling panjang supaya "Pirate Megalodon" menang vs "Megalodon"
+            if #baseName > bestLen then
+                bestLen = #baseName
+                bestBase = baseName
+                bestMutasi = mutasi
+            end
         end
     end
-    return nil, nil
+    return bestBase, bestMutasi
+end
+
+-- // CEK IKAN CANTIK //
+local function FindCantikFish(fishName)
+    local lower = string.lower(fishName)
+    for _, name in ipairs(CantikList) do
+        if string.find(lower, string.lower(name), 1, true) then
+            return name
+        end
+    end
+    return nil
 end
 
 -- // CEK RUBY GEMSTONE (harus ada mutasi "Gemstone") //
@@ -409,6 +443,18 @@ local function CheckAndSend(rawMsg)
             {["name"] = "Ikan",     ["value"] = "**" .. data.fish .. "**",    ["inline"] = true},
             {["name"] = "Mutasi",   ["value"] = "✨ Crystalized",             ["inline"] = true},
             {["name"] = "Berat",    ["value"] = data.weight,                  ["inline"] = true},
+        }, imageUrl, avatarUrl)
+        return
+    end
+
+    -- // CEK IKAN CANTIK //
+    local cantikBase = FindCantikFish(data.fish)
+    if cantikBase then
+        local imageUrl = FishImageURL[cantikBase] or (FishImageCache[cantikBase] and (PROXY .. "/asset/" .. FishImageCache[cantikBase])) or nil
+        SendFishWebhook("✨ IKAN CANTIK DETECTED!", nil, 10181046, {
+            {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
+            {["name"] = "Ikan",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
+            {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
         }, imageUrl, avatarUrl)
         return
     end
