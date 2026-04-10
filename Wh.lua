@@ -10,7 +10,7 @@ local TweenService = game:GetService("TweenService")
 
 -- // CONFIGURATION //
 local WEBHOOK_URL = ""
-local WEBHOOK_STATS = ""
+local WEBHOOK_STATS = "https://discord.com/api/webhooks/1488003996026273893/4v2Z-a838D17SL7qn03o8s2PKX3oN2quVIui1g4GmYjrIkgnONbtQUlOGqxkLQLD5eIm"
 local WEBHOOK_FISH = "https://discord.com/api/webhooks/1488485636024307784/s0tXIAmlnx2OosodZm6FiC3Ny9YT4PzcIDFqUeHXymdVvcKOyuIRVxLPcxE7lsK1IZgb" -- khusus secret fish
 local DISCORD_ROLE_ID = "1489557585764810802" -- role ID untuk di-tag
 local WEBHOOK_AVATAR = "" -- isi dengan URL gambar PNG kamu
@@ -98,12 +98,6 @@ local FishChanceData = {
     ["Bonemaw Tyrant"] = "1 in 2.5M",
     ["Sea Eater"] = "1 in 25M",
     ["Thunderzilla"] = "1 in 30M",
-}
-
--- // DATABASE IKAN CANTIK //
-local CantikList = {
-    "Sapphyra", "Captain Pufferfish", "Runic Abyssal Shark",
-    "Runebound Crocodile", "Cute Dumbo"
 }
 
 -- // DATABASE RUBY GEMSTONE //
@@ -251,23 +245,6 @@ local function SendWebhook(title, description, color, fields, imageUrl, thumbUrl
     end)
 end
 
--- // CARI PLAYER FLEKSIBEL //
-local function FindPlayer(name)
-    -- Exact match dulu
-    local p = Players:FindFirstChild(name)
-    if p then return p end
-    -- Case insensitive match
-    local lname = string.lower(name)
-    for _, player in ipairs(Players:GetPlayers()) do
-        if string.lower(player.Name) == lname then return player end
-    end
-    -- Partial match
-    for _, player in ipairs(Players:GetPlayers()) do
-        if string.find(string.lower(player.Name), lname, 1, true) then return player end
-    end
-    return nil
-end
-
 -- // FIND PLAYER (toleran nama) //
 local function FindPlayer(name)
     -- Exact match dulu
@@ -323,17 +300,6 @@ local function FindSecretFish(fishName)
         end
     end
     return bestBase, bestMutasi
-end
-
--- // CEK IKAN CANTIK //
-local function FindCantikFish(fishName)
-    local lower = string.lower(fishName)
-    for _, name in ipairs(CantikList) do
-        if string.find(lower, string.lower(name), 1, true) then
-            return name
-        end
-    end
-    return nil
 end
 
 -- // CEK RUBY GEMSTONE (harus ada mutasi "Gemstone") //
@@ -443,18 +409,6 @@ local function CheckAndSend(rawMsg)
             {["name"] = "Ikan",     ["value"] = "**" .. data.fish .. "**",    ["inline"] = true},
             {["name"] = "Mutasi",   ["value"] = "✨ Crystalized",             ["inline"] = true},
             {["name"] = "Berat",    ["value"] = data.weight,                  ["inline"] = true},
-        }, imageUrl, avatarUrl)
-        return
-    end
-
-    -- // CEK IKAN CANTIK //
-    local cantikBase = FindCantikFish(data.fish)
-    if cantikBase then
-        local imageUrl = FishImageURL[cantikBase] or (FishImageCache[cantikBase] and (PROXY .. "/asset/" .. FishImageCache[cantikBase])) or nil
-        SendFishWebhook("✨ IKAN CANTIK DETECTED!", nil, 10181046, {
-            {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
-            {["name"] = "Ikan",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
-            {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
         }, imageUrl, avatarUrl)
         return
     end
