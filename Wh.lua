@@ -31,7 +31,7 @@ local SecretFishList = {
     "Emerald Winter Whale", "Winter Frost Shark", "Icebreaker Whale", "Leviathan",
     "Pirate Megalodon", "Viridis Lurker", "Cursed Kraken", "Ancient Magma Whale",
     "Rainbow Comet Shark", "Love Nessie", "Broken Heart Nessie",
-    "Mutant Runic Koi", "Ketupat Whale", "Cosmic Mutant Shark",
+    "Mutant Runic Koi", "Ketupat Whale", "Cosmic Mutant Shark", "Strawberry Orca",
     "Bonemaw Tyrant",
     -- Forgotten Tier
     "Sea Eater", "Thunderzilla"
@@ -95,6 +95,7 @@ local FishChanceData = {
     ["Ancient Magma Whale"] = "1 in 5M",
     ["Mutant Runic Koi"] = "1 in ??",
     ["Cosmic Mutant Shark"] = "1 in 2M",
+    ["Strawberry Orca"] = "1 in 3M",
     ["Bonemaw Tyrant"] = "1 in 2.5M",
     ["Sea Eater"] = "1 in 25M",
     ["Thunderzilla"] = "1 in 30M",
@@ -150,6 +151,7 @@ local FishImageURL = {
     ["Skeleton Narwhal"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Skeleton%20Narwhal.png",
     ["Thin Armored Shark"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Thin%20Armor%20Shark.png",
     ["Thunderzilla"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Thunderzilla.png",
+    ["Strawberry Orca"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Strawberry%20Orca.png",
     ["Worm Fish"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Worm%20Fish.png",
 }
 
