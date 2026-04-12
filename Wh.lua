@@ -17,6 +17,13 @@ local WEBHOOK_AVATAR = "" -- isi dengan URL gambar PNG kamu
 local PROXY = "https://square-haze-a007.remediashop.workers.dev"
 local SCRIPT_ACTIVE = false
 
+-- // MEMBER LIST (Roblox Username -> Discord ID) //
+-- Tambah member di sini: ["RobloxUsername"] = "DiscordID"
+local MemberList = {
+    -- ["x_ibo21"] = "123456789012345678",
+    -- ["PandaBertaring"] = "987654321098765432",
+}
+
 -- // DATABASE NAMA SECRET FISH //
 local SecretFishList = {
     "Crystal Crab", "Orca", "Zombie Shark", "Zombie Megalodon", "Dead Zombie Shark",
@@ -34,12 +41,12 @@ local SecretFishList = {
     "Mutant Runic Koi", "Ketupat Whale", "Cosmic Mutant Shark", "Strawberry Orca",
     "Bonemaw Tyrant",
     -- Forgotten Tier
-    "Sea Eater", "Thunderzilla"
+    "Sea Eater", "Thunderzilla", "Iridesca",
 }
 
 -- // DATABASE FORGOTTEN TIER //
 local ForgottenList = {
-    "Sea Eater", "Thunderzilla"
+    "Sea Eater", "Thunderzilla", "Iridesca",
 }
 
 
@@ -99,6 +106,13 @@ local FishChanceData = {
     ["Bonemaw Tyrant"] = "1 in 2.5M",
     ["Sea Eater"] = "1 in 25M",
     ["Thunderzilla"] = "1 in 30M",
+    ["Iridesca"] = "1 in 25m",
+    ["Eggy Enchant Stone"] = "1 in 100k",
+}
+
+-- // DATABASE MYTHIC TIER //
+local MythicList = {
+    "Eggy Enchant Stone"
 }
 
 -- // DATABASE RUBY GEMSTONE //
@@ -152,7 +166,9 @@ local FishImageURL = {
     ["Thin Armored Shark"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Thin%20Armor%20Shark.png",
     ["Thunderzilla"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Thunderzilla.png",
     ["Strawberry Orca"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Strawberry%20Orca.png",
+    ["Eggy Enchant Stone"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Eggy%20Enchant%20Stone.png",
     ["Worm Fish"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Worm%20Fish.png",
+    ["Iridesca"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Iridesca.png",
 }
 
 -- // CACHE TAMBAHAN DARI BACKPACK MONITOR //
@@ -169,6 +185,9 @@ local LeaveTimers = {}
 local PlayerStats = {}
 -- key = playerName (lowercase), value = userId
 local PlayerNameToId = {}
+
+-- // CACHE DISCORD MENTION (username/displayname -> discordId) //
+local MentionCache = {}
 
 -- // STATS WEBHOOK SENDER //
 local function SendStatsWebhook(title, description, color, fields, imageUrl, thumbUrl)
@@ -197,14 +216,20 @@ local function SendStatsWebhook(title, description, color, fields, imageUrl, thu
 end
 
 -- // FISH WEBHOOK SENDER //
-local function SendFishWebhook(title, description, color, fields, imageUrl, thumbUrl)
+local function SendFishWebhook(title, description, color, fields, imageUrl, thumbUrl, mention)
     local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
     if not requestFunc then return end
     local url = (WEBHOOK_FISH ~= "") and WEBHOOK_FISH or WEBHOOK_URL
     if url == "" then return end
+    -- Tambah mention sebagai field kalau ada
+    local finalFields = {}
+    for _, f in ipairs(fields) do table.insert(finalFields, f) end
+    if mention and mention ~= "" then
+        table.insert(finalFields, {["name"] = "📣 Mention", ["value"] = mention:match("^%s*(.-)%s*$"), ["inline"] = true})
+    end
     local embed = {
         ["title"] = title, ["description"] = description, ["color"] = color,
-        ["fields"] = fields,
+        ["fields"] = finalFields,
         ["footer"] = {["text"] = "BLOX Gank Webhook | " .. os.date("%X")},
         ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
     }
@@ -212,20 +237,31 @@ local function SendFishWebhook(title, description, color, fields, imageUrl, thum
     if thumbUrl then embed["thumbnail"] = {["url"] = thumbUrl} end
     task.spawn(function()
         pcall(function()
-            requestFunc({Url = url, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = HttpService:JSONEncode({["embeds"] = {embed}})})
+            requestFunc({
+                Url = url,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode({["embeds"] = {embed}})
+            })
         end)
     end)
 end
 
 -- // WEBHOOK SENDER //
-local function SendWebhook(title, description, color, fields, imageUrl, thumbUrl)
+local function SendWebhook(title, description, color, fields, imageUrl, thumbUrl, mention)
     local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
     if not requestFunc then return end
+    -- Tambah mention sebagai field kalau ada
+    local finalFields = {}
+    for _, f in ipairs(fields) do table.insert(finalFields, f) end
+    if mention and mention ~= "" then
+        table.insert(finalFields, {["name"] = "📣 Mention", ["value"] = mention:match("^%s*(.-)%s*$"), ["inline"] = true})
+    end
     local embed = {
         ["title"] = title,
         ["description"] = description,
         ["color"] = color,
-        ["fields"] = fields,
+        ["fields"] = finalFields,
         ["footer"] = {["text"] = "BLOX Gank Webhook | " .. os.date("%X")},
         ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
     }
@@ -245,6 +281,22 @@ local function SendWebhook(title, description, color, fields, imageUrl, thumbUrl
             })
         end)
     end)
+end
+
+-- // AMBIL DISCORD MENTION DARI ROBLOX USERNAME //
+local function GetMention(robloxName)
+    if not robloxName then return "" end
+    -- Cek exact match
+    local discordId = MemberList[robloxName]
+    if discordId then return "<@" .. discordId .. "> " end
+    -- Cek case insensitive
+    local lower = string.lower(robloxName)
+    for rbxName, dId in pairs(MemberList) do
+        if string.lower(rbxName) == lower then
+            return "<@" .. dId .. "> "
+        end
+    end
+    return ""
 end
 
 -- // FIND PLAYER (toleran nama) //
@@ -302,6 +354,17 @@ local function FindSecretFish(fishName)
         end
     end
     return bestBase, bestMutasi
+end
+
+-- // CEK MYTHIC TIER //
+local function FindMythic(fishName)
+    local lower = string.lower(fishName)
+    for _, name in ipairs(MythicList) do
+        if string.find(lower, string.lower(name), 1, true) then
+            return name
+        end
+    end
+    return nil
 end
 
 -- // CEK RUBY GEMSTONE (harus ada mutasi "Gemstone") //
@@ -411,7 +474,19 @@ local function CheckAndSend(rawMsg)
             {["name"] = "Ikan",     ["value"] = "**" .. data.fish .. "**",    ["inline"] = true},
             {["name"] = "Mutasi",   ["value"] = "✨ Crystalized",             ["inline"] = true},
             {["name"] = "Berat",    ["value"] = data.weight,                  ["inline"] = true},
-        }, imageUrl, avatarUrl)
+        }, imageUrl, avatarUrl, GetMention(data.player))
+        return
+    end
+
+    -- // CEK MYTHIC TIER //
+    local mythicBase = FindMythic(data.fish)
+    if mythicBase then
+        local imageUrl = FishImageURL[mythicBase] or nil
+        SendFishWebhook("🔥 MYTHIC TIER DETECTED!", nil, 16711935, {
+            {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
+            {["name"] = "Item",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
+            {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
+        }, imageUrl, avatarUrl, GetMention(data.player))
         return
     end
 
@@ -423,7 +498,7 @@ local function CheckAndSend(rawMsg)
             {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
             {["name"] = "Item",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
             {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
-        }, imageUrl, avatarUrl)
+        }, imageUrl, avatarUrl, GetMention(data.player))
         return
     end
 
@@ -463,7 +538,7 @@ local function CheckAndSend(rawMsg)
             {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
             {["name"] = "Berat",   ["value"] = data.weight,                 ["inline"] = true},
             {["name"] = "Chance",  ["value"] = "🎲 " .. chanceInfo,         ["inline"] = true},
-        }, imageUrl, avatarUrl)
+        }, imageUrl, avatarUrl, GetMention(data.player))
     else
         SendFishWebhook("🚨 SECRET FISH DETECTED!", nil, 1752220, {
             {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
@@ -471,7 +546,7 @@ local function CheckAndSend(rawMsg)
             {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
             {["name"] = "Berat",   ["value"] = data.weight,                 ["inline"] = true},
             {["name"] = "Chance",  ["value"] = "🎲 " .. chanceInfo,         ["inline"] = true},
-        }, imageUrl, avatarUrl)
+        }, imageUrl, avatarUrl, GetMention(data.player))
     end
 end
 
@@ -572,6 +647,14 @@ local function StartMonitoring()
         PlayerStats[p.UserId] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = p.Name }
         PlayerNameToId[string.lower(p.Name)] = p.UserId
         PlayerNameToId[string.lower(p.DisplayName)] = p.UserId
+        -- Build mention cache untuk username dan displayname
+        for rbxName, dId in pairs(MemberList) do
+            if string.lower(rbxName) == string.lower(p.Name) or
+               string.lower(rbxName) == string.lower(p.DisplayName) then
+                MentionCache[string.lower(p.Name)] = dId
+                MentionCache[string.lower(p.DisplayName)] = dId
+            end
+        end
     end
     Players.PlayerAdded:Connect(function(player)
         if not SCRIPT_ACTIVE then return end
@@ -585,6 +668,14 @@ local function StartMonitoring()
         PlayerStats[player.UserId] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = player.Name }
         PlayerNameToId[string.lower(player.Name)] = player.UserId
         PlayerNameToId[string.lower(player.DisplayName)] = player.UserId
+        -- Build mention cache
+        for rbxName, dId in pairs(MemberList) do
+            if string.lower(rbxName) == string.lower(player.Name) or
+               string.lower(rbxName) == string.lower(player.DisplayName) then
+                MentionCache[string.lower(player.Name)] = dId
+                MentionCache[string.lower(player.DisplayName)] = dId
+            end
+        end
 
         task.spawn(function()
             task.wait(1)
@@ -593,7 +684,7 @@ local function StartMonitoring()
             SendWebhook("✅ PLAYER JOINED SERVER", nil, 65280, {
                 {["name"] = "Username", ["value"] = "**" .. player.Name .. "**",              ["inline"] = true},
                 {["name"] = "Total",    ["value"] = "👥 " .. tostring(#Players:GetPlayers()), ["inline"] = true}
-            }, nil, avatarUrl)
+            }, nil, avatarUrl, GetMention(player.Name))
         end)
         WatchForFish(player)
     end)
@@ -637,7 +728,7 @@ local function StartMonitoring()
         SendWebhook("👋 PLAYER LEFT SERVER", nil, 16729344, {
             {["name"] = "Username", ["value"] = "**" .. pName .. "**",   ["inline"] = true},
             {["name"] = "Total",    ["value"] = "👥 " .. tostring(totalNow), ["inline"] = true}
-        }, nil, avatarUrl)
+        }, nil, avatarUrl, GetMention(pName))
 
         -- Kirim stats langsung di task.spawn terpisah
         task.spawn(function()
