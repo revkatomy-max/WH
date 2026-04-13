@@ -11,18 +11,22 @@ local TweenService = game:GetService("TweenService")
 -- // CONFIGURATION //
 local WEBHOOK_URL = ""
 local WEBHOOK_STATS = "https://discord.com/api/webhooks/1488003996026273893/4v2Z-a838D17SL7qn03o8s2PKX3oN2quVIui1g4GmYjrIkgnONbtQUlOGqxkLQLD5eIm"
-local WEBHOOK_FISH = "https://discord.com/api/webhooks/1488485636024307784/s0tXIAmlnx2OosodZm6FiC3Ny9YT4PzcIDFqUeHXymdVvcKOyuIRVxLPcxE7lsK1IZgb" -- khusus secret fish
-local DISCORD_ROLE_ID = "1489557585764810802" -- role ID untuk di-tag
-local WEBHOOK_AVATAR = "" -- isi dengan URL gambar PNG kamu
+local WEBHOOK_FISH = "https://discord.com/api/webhooks/1488485636024307784/s0tXIAmlnx2OosodZm6FiC3Ny9YT4PzcIDFqUeHXymdVvcKOyuIRVxLPcxE7lsK1IZgb"
+local DISCORD_ROLE_ID = "1489557585764810802"
+local WEBHOOK_AVATAR = ""
 local PROXY = "https://square-haze-a007.remediashop.workers.dev"
 local SCRIPT_ACTIVE = false
 
--- // MEMBER LIST (Roblox Username -> Discord ID) //
--- Tambah member di sini: ["RobloxUsername"] = "DiscordID"
+-- // MEMBER LIST //
+-- Format: { username = "RobloxUsername", display = "DisplayName", id = "DiscordID" }
+-- Bisa pakai Username ATAU DisplayName, keduanya akan dikenali
 local MemberList = {
-    -- ["x_ibo21"] = "123456789012345678",
-    -- ["PandaBertaring"] = "987654321098765432",
+    -- { username = "x_ibo21", display = "Ibo", id = "123456789012345678" },
+    -- { username = "PandaBertaring", display = "Panda", id = "987654321098765432" },
 }
+
+-- // CACHE DISCORD MENTION (username/displayname -> discordId) //
+local MentionCache = {}
 
 -- // DATABASE NAMA SECRET FISH //
 local SecretFishList = {
@@ -48,7 +52,6 @@ local SecretFishList = {
 local ForgottenList = {
     "Sea Eater", "Thunderzilla", "Iridesca",
 }
-
 
 -- // DATABASE CHANCE IKAN SECRET //
 local FishChanceData = {
@@ -106,8 +109,8 @@ local FishChanceData = {
     ["Bonemaw Tyrant"] = "1 in 2.5M",
     ["Sea Eater"] = "1 in 25M",
     ["Thunderzilla"] = "1 in 30M",
-    ["Iridesca"] = "1 in 25m",
-    ["Eggy Enchant Stone"] = "1 in 100k",
+    ["Iridesca"] = "1 in 25M",
+    ["Eggy Enchant Stone"] = "1 in 100K",
 }
 
 -- // DATABASE MYTHIC TIER //
@@ -181,23 +184,15 @@ local AvatarCache = {}
 local LeaveTimers = {}
 
 -- // PLAYER STATS TRACKER //
--- key = userId, value = { catchCount, secretList, joinTime, lastFishTime, name }
 local PlayerStats = {}
--- key = playerName (lowercase), value = userId
 local PlayerNameToId = {}
-
--- // CACHE DISCORD MENTION (username/displayname -> discordId) //
-local MentionCache = {}
 
 -- // STATS WEBHOOK SENDER //
 local function SendStatsWebhook(title, description, color, fields, imageUrl, thumbUrl)
     local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
     if not requestFunc then return end
     local embed = {
-        ["title"] = title,
-        ["description"] = description,
-        ["color"] = color,
-        ["fields"] = fields,
+        ["title"] = title, ["description"] = description, ["color"] = color, ["fields"] = fields,
         ["footer"] = {["text"] = "BLOX Gank Stats | " .. os.date("%X")},
         ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
     }
@@ -205,12 +200,7 @@ local function SendStatsWebhook(title, description, color, fields, imageUrl, thu
     if thumbUrl then embed["thumbnail"] = {["url"] = thumbUrl} end
     task.spawn(function()
         pcall(function()
-            requestFunc({
-                Url = WEBHOOK_STATS,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({["embeds"] = {embed}})
-            })
+            requestFunc({Url = WEBHOOK_STATS, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = HttpService:JSONEncode({["embeds"] = {embed}})})
         end)
     end)
 end
@@ -221,15 +211,13 @@ local function SendFishWebhook(title, description, color, fields, imageUrl, thum
     if not requestFunc then return end
     local url = (WEBHOOK_FISH ~= "") and WEBHOOK_FISH or WEBHOOK_URL
     if url == "" then return end
-    -- Tambah mention sebagai field kalau ada
     local finalFields = {}
     for _, f in ipairs(fields) do table.insert(finalFields, f) end
     if mention and mention ~= "" then
         table.insert(finalFields, {["name"] = "📣 Mention", ["value"] = mention:match("^%s*(.-)%s*$"), ["inline"] = true})
     end
     local embed = {
-        ["title"] = title, ["description"] = description, ["color"] = color,
-        ["fields"] = finalFields,
+        ["title"] = title, ["description"] = description, ["color"] = color, ["fields"] = finalFields,
         ["footer"] = {["text"] = "BLOX Gank Webhook | " .. os.date("%X")},
         ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
     }
@@ -237,12 +225,7 @@ local function SendFishWebhook(title, description, color, fields, imageUrl, thum
     if thumbUrl then embed["thumbnail"] = {["url"] = thumbUrl} end
     task.spawn(function()
         pcall(function()
-            requestFunc({
-                Url = url,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({["embeds"] = {embed}})
-            })
+            requestFunc({Url = url, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = HttpService:JSONEncode({["embeds"] = {embed}})})
         end)
     end)
 end
@@ -251,17 +234,13 @@ end
 local function SendWebhook(title, description, color, fields, imageUrl, thumbUrl, mention)
     local requestFunc = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
     if not requestFunc then return end
-    -- Tambah mention sebagai field kalau ada
     local finalFields = {}
     for _, f in ipairs(fields) do table.insert(finalFields, f) end
     if mention and mention ~= "" then
         table.insert(finalFields, {["name"] = "📣 Mention", ["value"] = mention:match("^%s*(.-)%s*$"), ["inline"] = true})
     end
     local embed = {
-        ["title"] = title,
-        ["description"] = description,
-        ["color"] = color,
-        ["fields"] = finalFields,
+        ["title"] = title, ["description"] = description, ["color"] = color, ["fields"] = finalFields,
         ["footer"] = {["text"] = "BLOX Gank Webhook | " .. os.date("%X")},
         ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
     }
@@ -270,46 +249,52 @@ local function SendWebhook(title, description, color, fields, imageUrl, thumbUrl
     task.spawn(function()
         pcall(function()
             requestFunc({
-                Url = WEBHOOK_URL,
-                Method = "POST",
+                Url = WEBHOOK_URL, Method = "POST",
                 Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({
-                    ["username"] = "BLOX Gank",
-                    ["avatar_url"] = WEBHOOK_AVATAR,
-                    ["embeds"] = {embed}
-                })
+                Body = HttpService:JSONEncode({["username"] = "BLOX Gank", ["avatar_url"] = WEBHOOK_AVATAR, ["embeds"] = {embed}})
             })
         end)
     end)
 end
 
--- // AMBIL DISCORD MENTION DARI ROBLOX USERNAME //
+-- // AMBIL DISCORD MENTION //
 local function GetMention(robloxName)
     if not robloxName then return "" end
-    -- Cek exact match
-    local discordId = MemberList[robloxName]
-    if discordId then return "<@" .. discordId .. "> " end
-    -- Cek case insensitive
     local lower = string.lower(robloxName)
-    for rbxName, dId in pairs(MemberList) do
-        if string.lower(rbxName) == lower then
-            return "<@" .. dId .. "> "
+    -- Cek MentionCache dulu
+    if MentionCache[lower] then
+        return "<@" .. MentionCache[lower] .. "> "
+    end
+    -- Fallback: cek MemberList langsung (username dan display)
+    for _, member in ipairs(MemberList) do
+        if string.lower(member.username) == lower or string.lower(member.display) == lower then
+            return "<@" .. member.id .. "> "
         end
     end
     return ""
 end
 
+-- // BUILD MENTION CACHE //
+local function BuildMentionCache(rbxName, rbxDisplay)
+    for _, member in ipairs(MemberList) do
+        if string.lower(member.username) == string.lower(rbxName) or
+           string.lower(member.display) == string.lower(rbxDisplay) or
+           string.lower(member.username) == string.lower(rbxDisplay) or
+           string.lower(member.display) == string.lower(rbxName) then
+            MentionCache[string.lower(rbxName)] = member.id
+            MentionCache[string.lower(rbxDisplay)] = member.id
+        end
+    end
+end
+
 -- // FIND PLAYER (toleran nama) //
 local function FindPlayer(name)
-    -- Exact match dulu
     local p = Players:FindFirstChild(name)
     if p then return p end
-    -- Case insensitive match
     local lower = string.lower(name)
     for _, player in ipairs(Players:GetPlayers()) do
         if string.lower(player.Name) == lower then return player end
     end
-    -- Partial match (nama di chat mungkin terpotong)
     for _, player in ipairs(Players:GetPlayers()) do
         if string.find(string.lower(player.Name), lower, 1, true) then return player end
         if string.find(lower, string.lower(player.Name), 1, true) then return player end
@@ -325,18 +310,12 @@ end
 -- // CEK SECRET FISH + SUPPORT MUTASI //
 local function FindSecretFish(fishName)
     local lower = string.lower(fishName)
-
-    -- PASS 1: Exact match dulu (prioritas tertinggi)
+    -- PASS 1: Exact match
     for _, baseName in ipairs(SecretFishList) do
-        if lower == string.lower(baseName) then
-            return baseName, nil
-        end
+        if lower == string.lower(baseName) then return baseName, nil end
     end
-
-    -- PASS 2: Cari baseName yang paling panjang match (hindari "Megalodon" match "Pirate Megalodon")
-    local bestBase = nil
-    local bestLen = 0
-    local bestMutasi = nil
+    -- PASS 2: Longest match
+    local bestBase, bestLen, bestMutasi = nil, 0, nil
     for _, baseName in ipairs(SecretFishList) do
         local s = string.find(lower, string.lower(baseName), 1, true)
         if s then
@@ -345,11 +324,8 @@ local function FindSecretFish(fishName)
                 mutasi = fishName:sub(1, s - 1):match("^%s*(.-)%s*$")
                 if mutasi == "" then mutasi = nil end
             end
-            -- Pilih baseName yang paling panjang supaya "Pirate Megalodon" menang vs "Megalodon"
             if #baseName > bestLen then
-                bestLen = #baseName
-                bestBase = baseName
-                bestMutasi = mutasi
+                bestLen = #baseName; bestBase = baseName; bestMutasi = mutasi
             end
         end
     end
@@ -360,17 +336,14 @@ end
 local function FindMythic(fishName)
     local lower = string.lower(fishName)
     for _, name in ipairs(MythicList) do
-        if string.find(lower, string.lower(name), 1, true) then
-            return name
-        end
+        if string.find(lower, string.lower(name), 1, true) then return name end
     end
     return nil
 end
 
--- // CEK RUBY GEMSTONE (harus ada mutasi "Gemstone") //
+-- // CEK RUBY GEMSTONE //
 local function FindRuby(fishName)
     local lower = string.lower(fishName)
-    -- Harus mengandung "ruby" DAN "gemstone"
     if not string.find(lower, "ruby") then return nil end
     if not string.find(lower, "gemstone") then return nil end
     return "Ruby"
@@ -379,12 +352,9 @@ end
 -- // CEK LEGENDARY CRYSTALIZED //
 local function FindLegendaryCrystal(fishName)
     local lower = string.lower(fishName)
-    -- Harus ada kata "crystalized" di nama
     if not string.find(lower, "crystalized") then return nil end
     for _, name in ipairs(LegendaryCrystalList) do
-        if string.find(lower, string.lower(name), 1, true) then
-            return name
-        end
+        if string.find(lower, string.lower(name), 1, true) then return name end
     end
     return nil
 end
@@ -407,20 +377,6 @@ local function GetFishImageId(item)
     return nil
 end
 
--- // CONVERT CHANCE STRING KE ANGKA //
--- "5K" -> 5000, "1M" -> 1000000, "500" -> 500
-local function ParseChanceNumber(chanceStr)
-    if not chanceStr then return 0 end
-    local s = chanceStr:match("^%s*(.-)%s*$"):upper()
-    local num = tonumber(s:match("^([%d%.]+)"))
-    if not num then return 0 end
-    if s:find("B") then return num * 1000000000
-    elseif s:find("M") then return num * 1000000
-    elseif s:find("K") then return num * 1000
-    end
-    return num
-end
-
 -- // PARSE CHAT SERVER //
 local function ParseChat(rawMsg)
     local msg = StripTags(rawMsg)
@@ -434,15 +390,11 @@ local function ParseChat(rawMsg)
     playerName = playerName:match("%[%a+%]:%s*(.+)") or playerName
     playerName = playerName:match("^%s*(.-)%s*$") or playerName
     weight = weight:match("^%s*(.-)%s*$") or weight
-
-    -- Parse chance: "with a 1 in 5K chance"
     local chanceStr = rawMsg:match("with a 1 in%s+([%d%.%a]+)%s+chance")
-    local chanceNum = ParseChanceNumber(chanceStr)
-
     fishFull = fishFull:match("^(.-)%s+with a 1 in") or fishFull
     fishFull = fishFull:match("^(.-)%s*[!%.]?$") or fishFull
     fishFull = fishFull:match("^%s*(.-)%s*$") or fishFull
-    return { player = playerName, fish = fishFull, weight = weight, chance = chanceStr or "N/A", chanceNum = chanceNum }
+    return { player = playerName, fish = fishFull, weight = weight, chance = chanceStr or "N/A" }
 end
 
 -- // PROSES PESAN CHAT SERVER //
@@ -454,8 +406,6 @@ local function CheckAndSend(rawMsg)
 
     local targetPlayer = FindPlayer(data.player)
     local avatarUrl = targetPlayer and (PROXY .. "/avatar/" .. tostring(targetPlayer.UserId) .. "?t=" .. tostring(os.time())) or nil
-
-    -- Track stats by name (lebih reliable dari userId)
     local uid = targetPlayer and targetPlayer.UserId or PlayerNameToId[string.lower(data.player)]
     if uid then
         if not PlayerStats[uid] then
@@ -465,20 +415,18 @@ local function CheckAndSend(rawMsg)
         PlayerStats[uid].lastFishTime = os.time()
     end
 
-    -- // CEK LEGENDARY CRYSTALIZED (prioritas tertinggi) //
     local legendaryBase = FindLegendaryCrystal(data.fish)
     if legendaryBase then
         local imageUrl = FishImageURL[legendaryBase] or (FishImageCache[legendaryBase] and (PROXY .. "/asset/" .. FishImageCache[legendaryBase])) or nil
         SendFishWebhook("💎 CRYSTALIZED LEGENDARY!", nil, 3407871, {
-            {["name"] = "Pemain",   ["value"] = "**" .. data.player .. "**",  ["inline"] = true},
-            {["name"] = "Ikan",     ["value"] = "**" .. data.fish .. "**",    ["inline"] = true},
-            {["name"] = "Mutasi",   ["value"] = "✨ Crystalized",             ["inline"] = true},
-            {["name"] = "Berat",    ["value"] = data.weight,                  ["inline"] = true},
+            {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
+            {["name"] = "Ikan",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
+            {["name"] = "Mutasi", ["value"] = "✨ Crystalized",            ["inline"] = true},
+            {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
         }, imageUrl, avatarUrl, GetMention(data.player))
         return
     end
 
-    -- // CEK MYTHIC TIER //
     local mythicBase = FindMythic(data.fish)
     if mythicBase then
         local imageUrl = FishImageURL[mythicBase] or nil
@@ -490,7 +438,6 @@ local function CheckAndSend(rawMsg)
         return
     end
 
-    -- // CEK RUBY GEMSTONE //
     local rubyBase = FindRuby(data.fish)
     if rubyBase then
         local imageUrl = FishImageURL[rubyBase] or (FishImageCache[rubyBase] and (PROXY .. "/asset/" .. FishImageCache[rubyBase])) or nil
@@ -502,32 +449,21 @@ local function CheckAndSend(rawMsg)
         return
     end
 
-    -- // CEK SECRET / FORGOTTEN FISH //
     local baseName, mutasi = FindSecretFish(data.fish)
     if not baseName then return end
     local imageUrl = FishImageURL[baseName] or (FishImageCache[baseName] and (PROXY .. "/asset/" .. FishImageCache[baseName])) or nil
-    local fishLabel = "**" .. data.fish .. "**"
-    if mutasi then fishLabel = "**" .. data.fish .. "** *(mutasi: " .. baseName .. ")*" end
 
-    -- Cek apakah Forgotten Tier
     local isForgotten = false
     for _, name in ipairs(ForgottenList) do
-        if string.lower(baseName) == string.lower(name) then
-            isForgotten = true
-            break
-        end
+        if string.lower(baseName) == string.lower(name) then isForgotten = true; break end
     end
 
-    -- Tambah ke list secret player
     if uid and PlayerStats[uid] then
         local existing = PlayerStats[uid].secretList[baseName] or 0
         PlayerStats[uid].secretList[baseName] = existing + 1
     end
 
-    -- Ambil chance dari database resmi
     local chanceInfo = FishChanceData[baseName] or "Unknown"
-
-    -- Pisah nama ikan dan mutasi jadi 2 field supaya tidak melebar
     local ikanField = "**" .. data.fish .. "**"
     local mutasiField = mutasi and ("*" .. mutasi .. "*") or "-"
 
@@ -601,33 +537,28 @@ local function StartMonitoring()
     })
     HookChat()
 
-    -- // KIRIM STATS SEMUA PLAYER TIAP 10 MENIT //
+    -- // KIRIM STATS TIAP 20 MENIT //
     task.spawn(function()
         while SCRIPT_ACTIVE do
-            task.wait(1200) -- 20 menit
+            task.wait(1200)
             if not SCRIPT_ACTIVE then break end
             for _, p in ipairs(Players:GetPlayers()) do
                 local uid = p.UserId
                 local stats = PlayerStats[uid]
                 if not stats then continue end
-
                 local duration = os.time() - stats.joinTime
                 local durationStr = math.floor(duration / 60) .. "m " .. (duration % 60) .. "s"
-
                 local lastFishStr = "Tidak ada"
                 if stats.lastFishTime then
                     local diff = os.time() - stats.lastFishTime
                     lastFishStr = math.floor(diff / 60) .. "m " .. (diff % 60) .. "s yang lalu"
                 end
-
                 local secretLines = {}
                 for fishName, count in pairs(stats.secretList) do
                     table.insert(secretLines, fishName .. " (" .. count .. "x)")
                 end
                 local secretStr = #secretLines > 0 and table.concat(secretLines, ", ") or "Tidak ada"
-
                 local avatarUrl = AvatarCache[uid] or (PROXY .. "/avatar/" .. tostring(uid) .. "?t=" .. tostring(os.time()))
-
                 SendStatsWebhook("📊 PLAYER STATS (20 Menit)", nil, 9807270, {
                     {["name"] = "👤 Username",      ["value"] = "**" .. p.Name .. "**",               ["inline"] = true},
                     {["name"] = "⏱️ Durasi Sesi",   ["value"] = durationStr,                           ["inline"] = true},
@@ -635,8 +566,7 @@ local function StartMonitoring()
                     {["name"] = "🕐 Last Fish",     ["value"] = lastFishStr,                           ["inline"] = true},
                     {["name"] = "🏆 Secret Caught", ["value"] = secretStr,                             ["inline"] = false},
                 }, nil, avatarUrl)
-
-                task.wait(0.5) -- delay antar player supaya tidak spam webhook
+                task.wait(0.5)
             end
         end
     end)
@@ -647,36 +577,16 @@ local function StartMonitoring()
         PlayerStats[p.UserId] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = p.Name }
         PlayerNameToId[string.lower(p.Name)] = p.UserId
         PlayerNameToId[string.lower(p.DisplayName)] = p.UserId
-        -- Build mention cache untuk username dan displayname
-        for rbxName, dId in pairs(MemberList) do
-            if string.lower(rbxName) == string.lower(p.Name) or
-               string.lower(rbxName) == string.lower(p.DisplayName) then
-                MentionCache[string.lower(p.Name)] = dId
-                MentionCache[string.lower(p.DisplayName)] = dId
-            end
-        end
+        BuildMentionCache(p.Name, p.DisplayName)
     end
+
     Players.PlayerAdded:Connect(function(player)
         if not SCRIPT_ACTIVE then return end
-
-        -- Batalkan timer "tidak kembali" LANGSUNG saat player join
-        if LeaveTimers[player.UserId] then
-            LeaveTimers[player.UserId] = nil
-        end
-
-        -- Init stats
+        if LeaveTimers[player.UserId] then LeaveTimers[player.UserId] = nil end
         PlayerStats[player.UserId] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = player.Name }
         PlayerNameToId[string.lower(player.Name)] = player.UserId
         PlayerNameToId[string.lower(player.DisplayName)] = player.UserId
-        -- Build mention cache
-        for rbxName, dId in pairs(MemberList) do
-            if string.lower(rbxName) == string.lower(player.Name) or
-               string.lower(rbxName) == string.lower(player.DisplayName) then
-                MentionCache[string.lower(player.Name)] = dId
-                MentionCache[string.lower(player.DisplayName)] = dId
-            end
-        end
-
+        BuildMentionCache(player.Name, player.DisplayName)
         task.spawn(function()
             task.wait(1)
             local avatarUrl = PROXY .. "/avatar/" .. tostring(player.UserId) .. "?t=" .. tostring(os.time())
@@ -688,49 +598,39 @@ local function StartMonitoring()
         end)
         WatchForFish(player)
     end)
+
     Players.PlayerRemoving:Connect(function(player)
         if not SCRIPT_ACTIVE then return end
-
-        -- Simpan semua data dulu sebelum player hilang
         local pName = player.Name
         local pId = player.UserId
         local avatarUrl = AvatarCache[pId] or (PROXY .. "/avatar/" .. tostring(pId) .. "?t=" .. tostring(os.time()))
         local stats = PlayerStats[pId] or { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil }
         local totalNow = #Players:GetPlayers() - 1
-
         AvatarCache[pId] = nil
         PlayerStats[pId] = nil
         PlayerNameToId[string.lower(pName)] = nil
-        -- Cari dan hapus display name mapping
-        for k, v in pairs(PlayerNameToId) do
-            if v == pId then PlayerNameToId[k] = nil end
-        end
+        for k, v in pairs(PlayerNameToId) do if v == pId then PlayerNameToId[k] = nil end end
+        for k, v in pairs(MentionCache) do if v == MentionCache[string.lower(pName)] and k ~= string.lower(pName) then MentionCache[k] = nil end end
+        MentionCache[string.lower(pName)] = nil
 
-        -- Hitung durasi sesi
         local duration = os.time() - stats.joinTime
         local durationStr = math.floor(duration / 60) .. "m " .. (duration % 60) .. "s"
-
-        -- Last fish time
         local lastFishStr = "Tidak ada"
         if stats.lastFishTime then
             local diff = os.time() - stats.lastFishTime
             lastFishStr = math.floor(diff / 60) .. "m " .. (diff % 60) .. "s yang lalu"
         end
-
-        -- Format secret list
         local secretLines = {}
         for fishName, count in pairs(stats.secretList) do
             table.insert(secretLines, fishName .. " (" .. count .. "x)")
         end
         local secretStr = #secretLines > 0 and table.concat(secretLines, ", ") or "Tidak ada"
 
-        -- Kirim leave notif
         SendWebhook("👋 PLAYER LEFT SERVER", nil, 16729344, {
-            {["name"] = "Username", ["value"] = "**" .. pName .. "**",   ["inline"] = true},
-            {["name"] = "Total",    ["value"] = "👥 " .. tostring(totalNow), ["inline"] = true}
+            {["name"] = "Username", ["value"] = "**" .. pName .. "**",        ["inline"] = true},
+            {["name"] = "Total",    ["value"] = "👥 " .. tostring(totalNow),  ["inline"] = true}
         }, nil, avatarUrl, GetMention(pName))
 
-        -- Kirim stats langsung di task.spawn terpisah
         task.spawn(function()
             task.wait(0.3)
             SendStatsWebhook("📊 PLAYER STATS", nil, 9807270, {
@@ -742,14 +642,13 @@ local function StartMonitoring()
             }, nil, avatarUrl)
         end)
 
-        -- Timer 10 menit tidak kembali
         LeaveTimers[pId] = true
         task.spawn(function()
             task.wait(600)
             if LeaveTimers[pId] then
                 LeaveTimers[pId] = nil
                 SendWebhook("⏰ PLAYER TIDAK KEMBALI", nil, 16711680, {
-                    {["name"] = "Username", ["value"] = "**" .. pName .. "**",             ["inline"] = true},
+                    {["name"] = "Username", ["value"] = "**" .. pName .. "**",               ["inline"] = true},
                     {["name"] = "Info",     ["value"] = "Tidak kembali selama **10 menit**", ["inline"] = true}
                 }, nil, nil)
             end
@@ -764,7 +663,6 @@ local function CreateUI()
     gui.ResetOnSpawn = false
     gui.Parent = (gethui and gethui()) or CoreGui
 
-    -- Main Frame
     local frame = Instance.new("Frame")
     frame.Name = "Main"
     frame.Size = UDim2.new(0, 300, 0, 320)
@@ -774,15 +672,12 @@ local function CreateUI()
     frame.Parent = gui
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
 
-    -- Top bar
     local topBar = Instance.new("Frame")
     topBar.Size = UDim2.new(1, 0, 0, 36)
     topBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     topBar.BorderSizePixel = 0
     topBar.Parent = frame
     Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 8)
-
-    -- Fix rounded corners hanya atas
     local topBarFix = Instance.new("Frame")
     topBarFix.Size = UDim2.new(1, 0, 0, 8)
     topBarFix.Position = UDim2.new(0, 0, 1, -8)
@@ -790,7 +685,6 @@ local function CreateUI()
     topBarFix.BorderSizePixel = 0
     topBarFix.Parent = topBar
 
-    -- Title
     local title = Instance.new("TextLabel")
     title.Text = "🎣 BLOX Gank Monitor"
     title.Size = UDim2.new(1, -80, 1, 0)
@@ -802,7 +696,6 @@ local function CreateUI()
     title.TextXAlignment = Enum.TextXAlignment.Left
     title.Parent = topBar
 
-    -- Minimize button
     local minBtn = Instance.new("TextButton")
     minBtn.Text = "—"
     minBtn.Size = UDim2.new(0, 28, 0, 22)
@@ -815,7 +708,6 @@ local function CreateUI()
     minBtn.Parent = topBar
     Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 4)
 
-    -- Close button
     local closeBtn = Instance.new("TextButton")
     closeBtn.Text = "✕"
     closeBtn.Size = UDim2.new(0, 28, 0, 22)
@@ -828,11 +720,9 @@ local function CreateUI()
     closeBtn.Parent = topBar
     Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
 
-    -- Minimize logic
     local isMinimized = false
     local fullSize = UDim2.new(0, 300, 0, 320)
     local miniSize = UDim2.new(0, 300, 0, 36)
-
     minBtn.MouseButton1Click:Connect(function()
         isMinimized = not isMinimized
         if isMinimized then
@@ -843,56 +733,31 @@ local function CreateUI()
             minBtn.Text = "—"
         end
     end)
-
-    -- Close logic
     closeBtn.MouseButton1Click:Connect(function()
-        TweenService:Create(frame, TweenInfo.new(0.15), {
-            Size = UDim2.new(0, 300, 0, 0),
-            BackgroundTransparency = 1
-        }):Play()
-        task.wait(0.2)
-        gui:Destroy()
+        TweenService:Create(frame, TweenInfo.new(0.15), {Size = UDim2.new(0, 300, 0, 0), BackgroundTransparency = 1}):Play()
+        task.wait(0.2); gui:Destroy()
     end)
+    minBtn.MouseEnter:Connect(function() TweenService:Create(minBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(80, 80, 80)}):Play() end)
+    minBtn.MouseLeave:Connect(function() TweenService:Create(minBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play() end)
+    closeBtn.MouseEnter:Connect(function() TweenService:Create(closeBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(230, 70, 70)}):Play() end)
+    closeBtn.MouseLeave:Connect(function() TweenService:Create(closeBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}):Play() end)
 
-    -- Hover effects
-    minBtn.MouseEnter:Connect(function()
-        TweenService:Create(minBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(80, 80, 80)}):Play()
-    end)
-    minBtn.MouseLeave:Connect(function()
-        TweenService:Create(minBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
-    end)
-    closeBtn.MouseEnter:Connect(function()
-        TweenService:Create(closeBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(230, 70, 70)}):Play()
-    end)
-    closeBtn.MouseLeave:Connect(function()
-        TweenService:Create(closeBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}):Play()
-    end)
-
-    -- Draggable
     local dragging, dragStart, startPos
     topBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
+            dragging = true; dragStart = input.Position; startPos = frame.Position
         end
     end)
     topBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
     game:GetService("UserInputService").InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            frame.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 
-    -- Status dot + label
     local statusDot = Instance.new("Frame")
     statusDot.Size = UDim2.new(0, 8, 0, 8)
     statusDot.Position = UDim2.new(0, 16, 0, 46)
@@ -951,17 +816,13 @@ local function CreateUI()
 
     makeLabel("👋 Webhook Join / Leave", 58)
     local inputJoin = makeInput("Paste webhook join/leave...", 72)
-
     makeLabel("🚨 Webhook Secret Fish", 110)
     local inputFish = makeInput("Paste webhook secret fish...", 124)
-
     makeLabel("📊 Webhook Stats", 162)
     local inputStats = makeInput("Paste webhook stats...", 176)
-
     makeLabel("🔔 Discord Role ID (opsional)", 214)
     local inputRole = makeInput("Masukkan Role ID...", 228)
 
-    -- Start button
     local startBtn = Instance.new("TextButton")
     startBtn.Text = "START MONITORING"
     startBtn.Size = UDim2.new(1, -24, 0, 34)
@@ -974,21 +835,16 @@ local function CreateUI()
     startBtn.Parent = frame
     Instance.new("UICorner", startBtn).CornerRadius = UDim.new(0, 6)
 
-    -- Stroke border
     local stroke = Instance.new("UIStroke")
     stroke.Color = Color3.fromRGB(50, 50, 50)
     stroke.Thickness = 1
     stroke.Parent = frame
 
-    -- Button logic
     startBtn.MouseButton1Click:Connect(function()
         if SCRIPT_ACTIVE then return end
-
         local joinText = inputJoin.Text
         local fishText = inputFish.Text
         local statsText = inputStats.Text
-
-        -- Minimal webhook join harus diisi
         if not joinText:find("discord.com/api/webhooks") then
             startBtn.Text = "❌ WEBHOOK JOIN INVALID!"
             startBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
@@ -997,15 +853,12 @@ local function CreateUI()
             startBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
             return
         end
-
         WEBHOOK_URL = joinText
         if fishText:find("discord.com/api/webhooks") then WEBHOOK_FISH = fishText end
         if statsText:find("discord.com/api/webhooks") then WEBHOOK_STATS = statsText end
         local roleText = inputRole.Text:match("^%s*(.-)%s*$")
         if roleText ~= "" then DISCORD_ROLE_ID = roleText end
         SCRIPT_ACTIVE = true
-
-        -- Update UI
         statusDot.BackgroundColor3 = Color3.fromRGB(0, 220, 100)
         statusLabel.Text = "Aktif — Monitoring..."
         statusLabel.TextColor3 = Color3.fromRGB(0, 220, 100)
@@ -1015,20 +868,14 @@ local function CreateUI()
         inputFish.TextEditable = false
         inputStats.TextEditable = false
         inputRole.TextEditable = false
-
         StartMonitoring()
     end)
 
-    -- Hover effect
     startBtn.MouseEnter:Connect(function()
-        if not SCRIPT_ACTIVE then
-            TweenService:Create(startBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 210, 120)}):Play()
-        end
+        if not SCRIPT_ACTIVE then TweenService:Create(startBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 210, 120)}):Play() end
     end)
     startBtn.MouseLeave:Connect(function()
-        if not SCRIPT_ACTIVE then
-            TweenService:Create(startBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 180, 100)}):Play()
-        end
+        if not SCRIPT_ACTIVE then TweenService:Create(startBtn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(0, 180, 100)}):Play() end
     end)
 end
 
