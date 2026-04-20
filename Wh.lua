@@ -53,6 +53,15 @@ local ForgottenList = {
     "Sea Eater", "Thunderzilla", "Iridesca",
 }
 
+-- // DATABASE IKAN CANTIK //
+local CantikList = {
+    "King Frog", "Cute Octopus", "Prismy Seashore", "Nine Tailed Fish",
+    "Pink Dolphin", "Sea Anemone", "Axolotl", "Cosmic Tailfish",
+    "Planetary Neonite", "Sacred Guardian", "Blackhole Sea Dragon",
+    "Rainy Dumbo", "Stormy Dumbo", "Sapphyra", "Star Snail",
+    "Cute Dumbo", "Voidlight Deepfish", "Offshore Herals",
+}
+
 -- // DATABASE CHANCE IKAN SECRET //
 local FishChanceData = {
     ["Crystal Crab"] = "1 in 750K",
@@ -263,11 +272,9 @@ end
 local function GetMention(robloxName)
     if not robloxName then return "" end
     local lower = string.lower(robloxName)
-    -- Cek MentionCache dulu
     if MentionCache[lower] then
         return "<@" .. MentionCache[lower] .. "> "
     end
-    -- Fallback: cek MemberList langsung (username dan display)
     for _, member in ipairs(MemberList) do
         if string.lower(member.username) == lower or string.lower(member.display) == lower then
             return "<@" .. member.id .. "> "
@@ -307,6 +314,26 @@ end
 -- // STRIP HTML TAGS //
 local function StripTags(str)
     return string.gsub(str, "<[^>]+>", "")
+end
+
+-- // CEK IKAN CANTIK //
+local function FindCantik(fishName)
+    local lower = string.lower(fishName)
+    -- PASS 1: Exact match
+    for _, name in ipairs(CantikList) do
+        if lower == string.lower(name) then return name end
+    end
+    -- PASS 2: Substring match (terpanjang)
+    local bestName, bestLen = nil, 0
+    for _, name in ipairs(CantikList) do
+        if string.find(lower, string.lower(name), 1, true) then
+            if #name > bestLen then
+                bestLen = #name
+                bestName = name
+            end
+        end
+    end
+    return bestName
 end
 
 -- // CEK SECRET FISH + SUPPORT MUTASI //
@@ -417,6 +444,7 @@ local function CheckAndSend(rawMsg)
         PlayerStats[uid].lastFishTime = os.time()
     end
 
+    -- // CEK CRYSTALIZED LEGENDARY //
     local legendaryBase = FindLegendaryCrystal(data.fish)
     if legendaryBase then
         local imageUrl = FishImageURL[legendaryBase] or (FishImageCache[legendaryBase] and (PROXY .. "/asset/" .. FishImageCache[legendaryBase])) or nil
@@ -429,6 +457,7 @@ local function CheckAndSend(rawMsg)
         return
     end
 
+    -- // CEK MYTHIC TIER //
     local mythicBase = FindMythic(data.fish)
     if mythicBase then
         local imageUrl = FishImageURL[mythicBase] or nil
@@ -440,6 +469,7 @@ local function CheckAndSend(rawMsg)
         return
     end
 
+    -- // CEK RUBY GEMSTONE //
     local rubyBase = FindRuby(data.fish)
     if rubyBase then
         local imageUrl = FishImageURL[rubyBase] or (FishImageCache[rubyBase] and (PROXY .. "/asset/" .. FishImageCache[rubyBase])) or nil
@@ -451,6 +481,30 @@ local function CheckAndSend(rawMsg)
         return
     end
 
+    -- // CEK IKAN CANTIK (hanya jika ada mutasi prefix) //
+    local cantikBase = FindCantik(data.fish)
+    if cantikBase then
+        local mutasiStr = nil
+        local lower = string.lower(data.fish)
+        local s = string.find(lower, string.lower(cantikBase), 1, true)
+        if s and s > 1 then
+            local prefix = data.fish:sub(1, s - 1):match("^%s*(.-)%s*$")
+            if prefix and prefix ~= "" then mutasiStr = prefix end
+        end
+        -- Hanya kirim jika ada mutasi, tanpa mutasi diabaikan
+        if mutasiStr then
+            local imageUrl = FishImageURL[cantikBase] or (FishImageCache[cantikBase] and (PROXY .. "/asset/" .. FishImageCache[cantikBase])) or nil
+            SendFishWebhook("🌸 IKAN CANTIKMU!", nil, 10040319, {
+                {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
+                {["name"] = "Ikan",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
+                {["name"] = "Mutasi", ["value"] = mutasiStr,                   ["inline"] = true},
+                {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
+            }, imageUrl, avatarUrl, GetMention(data.player))
+            return
+        end
+    end
+
+    -- // CEK SECRET FISH //
     local baseName, mutasi = FindSecretFish(data.fish)
     if not baseName then return end
     local imageUrl = FishImageURL[baseName] or (FishImageCache[baseName] and (PROXY .. "/asset/" .. FishImageCache[baseName])) or nil
@@ -496,6 +550,12 @@ local function WatchBackpack(player, bp)
         if baseName and not FishImageURL[baseName] and not FishImageCache[baseName] then
             local imgId = GetFishImageId(item)
             if imgId then FishImageCache[baseName] = imgId end
+        end
+        -- Cek juga untuk ikan cantik
+        local cantikName = FindCantik(item.Name)
+        if cantikName and not FishImageURL[cantikName] and not FishImageCache[cantikName] then
+            local imgId = GetFishImageId(item)
+            if imgId then FishImageCache[cantikName] = imgId end
         end
     end)
 end
