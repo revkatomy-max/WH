@@ -448,7 +448,7 @@ local function CheckAndSend(rawMsg)
     local legendaryBase = FindLegendaryCrystal(data.fish)
     if legendaryBase then
         local imageUrl = FishImageURL[legendaryBase] or (FishImageCache[legendaryBase] and (PROXY .. "/asset/" .. FishImageCache[legendaryBase])) or nil
-        SendFishWebhook("💎 CRYSTALIZED LEGENDARY!", nil, 3407871, {
+        SendFishWebhook("☄️ CRYSTALIZED LEGENDARY!", nil, 3407871, {
             {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
             {["name"] = "Ikan",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
             {["name"] = "Mutasi", ["value"] = "✨ Crystalized",            ["inline"] = true},
@@ -461,7 +461,7 @@ local function CheckAndSend(rawMsg)
     local mythicBase = FindMythic(data.fish)
     if mythicBase then
         local imageUrl = FishImageURL[mythicBase] or nil
-        SendFishWebhook("🔥 MYTHIC TIER DETECTED!", nil, 16711935, {
+        SendFishWebhook("🐣 MYTHIC TIER DETECTED!", nil, 16711935, {
             {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
             {["name"] = "Item",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
             {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
@@ -481,7 +481,8 @@ local function CheckAndSend(rawMsg)
         return
     end
 
-    -- // CEK IKAN CANTIK (hanya jika ada mutasi prefix) //
+    -- // CEK IKAN CANTIK (hanya jika ada mutasi prefix, kecuali mutasi "Big") //
+    local CantikMutasiBlacklist = { "big" }
     local cantikBase = FindCantik(data.fish)
     if cantikBase then
         local mutasiStr = nil
@@ -491,10 +492,16 @@ local function CheckAndSend(rawMsg)
             local prefix = data.fish:sub(1, s - 1):match("^%s*(.-)%s*$")
             if prefix and prefix ~= "" then mutasiStr = prefix end
         end
-        -- Hanya kirim jika ada mutasi, tanpa mutasi diabaikan
+        local isBlacklisted = false
         if mutasiStr then
+            for _, bl in ipairs(CantikMutasiBlacklist) do
+                if string.lower(mutasiStr) == bl then isBlacklisted = true; break end
+            end
+        end
+        -- Hanya kirim jika ada mutasi dan tidak masuk blacklist
+        if mutasiStr and not isBlacklisted then
             local imageUrl = FishImageURL[cantikBase] or (FishImageCache[cantikBase] and (PROXY .. "/asset/" .. FishImageCache[cantikBase])) or nil
-            SendFishWebhook("🌸 IKAN CANTIKMU!", nil, 10040319, {
+            SendFishWebhook("🐠 IKAN CANTIKMU!", nil, 10040319, {
                 {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
                 {["name"] = "Ikan",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
                 {["name"] = "Mutasi", ["value"] = mutasiStr,                   ["inline"] = true},
@@ -524,7 +531,7 @@ local function CheckAndSend(rawMsg)
     local mutasiField = mutasi and ("*" .. mutasi .. "*") or "-"
 
     if isForgotten then
-        SendFishWebhook("🌟 FORGOTTEN TIER DETECTED!", nil, 16777215, {
+        SendFishWebhook("⚜️ FORGOTTEN TIER DETECTED!", nil, 16777215, {
             {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
             {["name"] = "Ikan",    ["value"] = ikanField,                   ["inline"] = true},
             {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
@@ -532,7 +539,7 @@ local function CheckAndSend(rawMsg)
             {["name"] = "Chance",  ["value"] = "🎲 " .. chanceInfo,         ["inline"] = true},
         }, imageUrl, avatarUrl, GetMention(data.player))
     else
-        SendFishWebhook("🚨 SECRET FISH DETECTED!", nil, 1752220, {
+        SendFishWebhook("🐋 SECRET FISH DETECTED!", nil, 1752220, {
             {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
             {["name"] = "Ikan",    ["value"] = ikanField,                   ["inline"] = true},
             {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
@@ -592,7 +599,7 @@ local function StartMonitoring()
     local allPlayers = Players:GetPlayers()
     local names = {}
     for _, p in ipairs(allPlayers) do table.insert(names, p.Name) end
-    SendWebhook("🚀 WEBHOOK STARTED", nil, 65280, {
+    SendWebhook("🎣 WEBHOOK STARTED", nil, 65280, {
         {["name"] = "Host",          ["value"] = "👤 " .. Players.LocalPlayer.Name,            ["inline"] = true},
         {["name"] = "Total Player",  ["value"] = "👥 " .. tostring(#allPlayers),                ["inline"] = true},
         {["name"] = "Daftar Player", ["value"] = "```\n" .. table.concat(names, ", ") .. "```", ["inline"] = false}
@@ -700,7 +707,7 @@ local function StartMonitoring()
                 {["name"] = "⏱️ Durasi Sesi",   ["value"] = durationStr,                           ["inline"] = true},
                 {["name"] = "🐟 Total Catch",   ["value"] = tostring(stats.catchCount) .. " ikan", ["inline"] = true},
                 {["name"] = "🕐 Last Fish",     ["value"] = lastFishStr,                           ["inline"] = true},
-                {["name"] = "🏆 Secret Caught", ["value"] = secretStr,                             ["inline"] = false},
+                {["name"] = "🐋 Secret Caught", ["value"] = secretStr,                             ["inline"] = false},
             }, nil, avatarUrl)
         end)
 
@@ -878,7 +885,7 @@ local function CreateUI()
 
     makeLabel("👋 Webhook Join / Leave", 58)
     local inputJoin = makeInput("Paste webhook join/leave...", 72)
-    makeLabel("🚨 Webhook Secret Fish", 110)
+    makeLabel("🐋 Webhook Secret Fish", 110)
     local inputFish = makeInput("Paste webhook secret fish...", 124)
     makeLabel("📊 Webhook Stats", 162)
     local inputStats = makeInput("Paste webhook stats...", 176)
