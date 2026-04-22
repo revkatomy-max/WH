@@ -482,7 +482,7 @@ local function CheckAndSend(rawMsg)
     end
 
     -- // CEK IKAN CANTIK (hanya jika ada mutasi prefix, kecuali mutasi "Big") //
-    local CantikMutasiBlacklist = { "big" }
+    local CantikMutasiBlacklist = { "big", "shiny", }
     local cantikBase = FindCantik(data.fish)
     if cantikBase then
         local mutasiStr = nil
@@ -501,7 +501,7 @@ local function CheckAndSend(rawMsg)
         -- Hanya kirim jika ada mutasi dan tidak masuk blacklist
         if mutasiStr and not isBlacklisted then
             local imageUrl = FishImageURL[cantikBase] or (FishImageCache[cantikBase] and (PROXY .. "/asset/" .. FishImageCache[cantikBase])) or nil
-            SendFishWebhook("🐠 IKAN CANTIKMU!", nil, 10040319, {
+            SendFishWebhook("🌸IKAN CANTIKMU!", nil, 10040319, {
                 {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
                 {["name"] = "Ikan",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
                 {["name"] = "Mutasi", ["value"] = mutasiStr,                   ["inline"] = true},
@@ -539,7 +539,7 @@ local function CheckAndSend(rawMsg)
             {["name"] = "Chance",  ["value"] = "🎲 " .. chanceInfo,         ["inline"] = true},
         }, imageUrl, avatarUrl, GetMention(data.player))
     else
-        SendFishWebhook("🐋 SECRET FISH DETECTED!", nil, 1752220, {
+        SendFishWebhook("🦕 SECRET FISH DETECTED!", nil, 1752220, {
             {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
             {["name"] = "Ikan",    ["value"] = ikanField,                   ["inline"] = true},
             {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
