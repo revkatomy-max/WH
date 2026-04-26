@@ -43,14 +43,14 @@ local SecretFishList = {
     "Pirate Megalodon", "Viridis Lurker", "Cursed Kraken", "Ancient Magma Whale",
     "Rainbow Comet Shark", "Love Nessie", "Broken Heart Nessie",
     "Mutant Runic Koi", "Ketupat Whale", "Cosmic Mutant Shark", "Strawberry Orca",
-    "Bonemaw Tyrant", "Deepsea Monster Axolotl",
+    "Bonemaw Tyrant", "Deepsea Monster Axolotl", "Blocky Lochness Monster",
     -- Forgotten Tier
-    "Sea Eater", "Thunderzilla", "Iridesca",
+    "Sea Eater", "Thunderzilla", "Iridesca", "Frostbite Leviathan",
 }
 
 -- // DATABASE FORGOTTEN TIER //
 local ForgottenList = {
-    "Sea Eater", "Thunderzilla", "Iridesca",
+    "Sea Eater", "Thunderzilla", "Iridesca", "Frostbite Leviathan",
 }
 
 -- // DATABASE IKAN CANTIK //
@@ -121,6 +121,8 @@ local FishChanceData = {
     ["Iridesca"] = "1 in 25M",
     ["Eggy Enchant Stone"] = "1 in 100K",
     ["Deepsea Monster Axolotl"] = "1 in 2M",
+    ["Blocky Monster Lochness"] = "1 in 3M",
+    ["Frosbite Leviathan"] = "1 in 12M",
 }
 
 -- // DATABASE MYTHIC TIER //
@@ -183,6 +185,8 @@ local FishImageURL = {
     ["Worm Fish"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Worm%20Fish.png",
     ["Iridesca"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Iridesca.png",
     ["Deepsea Monster Axolotl"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Deepsea%20Monster%20Axolotl.jpeg",
+    ["Blocky Monster Lochness"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Blocky%20Lochness%20Monster.jpeg",
+    ["Frosbite Leviathan"] = "https://raw.githubusercontent.com/revkatomy-max/asset-id/main/Frostbite%20Leviathan.jpeg",
 }
 
 -- // CACHE TAMBAHAN DARI BACKPACK MONITOR //
@@ -501,7 +505,7 @@ local function CheckAndSend(rawMsg)
         -- Hanya kirim jika ada mutasi dan tidak masuk blacklist
         if mutasiStr and not isBlacklisted then
             local imageUrl = FishImageURL[cantikBase] or (FishImageCache[cantikBase] and (PROXY .. "/asset/" .. FishImageCache[cantikBase])) or nil
-            SendFishWebhook("🌸IKAN CANTIKMU!", nil, 10040319, {
+            SendFishWebhook("🌸 IKAN CANTIKMU!", nil, 10040319, {
                 {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
                 {["name"] = "Ikan",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
                 {["name"] = "Mutasi", ["value"] = mutasiStr,                   ["inline"] = true},
