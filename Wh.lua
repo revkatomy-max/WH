@@ -127,7 +127,7 @@ local FishChanceData = {
 
 -- // DATABASE MYTHIC TIER //
 local MythicList = {
-    "Eggy Enchant Stone"
+    "Eggy Enchant Stone", "Dotted Stingray", "Hammerhead Shark", "Manta Ray", "Sharp One", "Loggerhead Turtle", "Prismy Seahorse", "Starlight Manta Ray", "Magma Shark", "Blueflame Ray", "Magma Swordfish", "Magma Ptychodus", "Hawks Turtle", "Luminous Fish", "Abyss Seahorse", "Hybodus Shark", "Strippied Seahorse", "Thresher Shark", "Fossilized Shark", "Hermit Crab", "Plasma Shark", "Plasma Serpent", "Armor Catfish", "Blob Fish", "Cosmic Blobfish", "Runic Abyssal Shark", "Runebound Crocodile", "Crocodile", "Baby Maya fish", "Curelean Lurker", "Phantom Goblin Shark", "Sea Crustacean", "Runic Sea Crustacean", "Runic Squid", "Ancient Squid", "Cavvern Dweller", "Primordial Octopus", "FlatHeaded Whale Shark", "Solarflare Koi", "Komodo Dragon", "Pirate Sailfish", "Goblin Shark", "Starry Night Sawfish", "Hanks Diary", "Abyr Squid", "Bioluminescent Mantaray",
 }
 
 -- // DATABASE RUBY GEMSTONE //
@@ -465,7 +465,7 @@ local function CheckAndSend(rawMsg)
     local mythicBase = FindMythic(data.fish)
     if mythicBase then
         local imageUrl = FishImageURL[mythicBase] or nil
-        SendFishWebhook("🐣 MYTHIC TIER DETECTED!", nil, 16711935, {
+        SendFishWebhook("🗝️ MYTHIC TIER DETECTED!", nil, 16711935, {
             {["name"] = "Pemain", ["value"] = "**" .. data.player .. "**", ["inline"] = true},
             {["name"] = "Item",   ["value"] = "**" .. data.fish .. "**",   ["inline"] = true},
             {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
