@@ -56,7 +56,7 @@ local ForgottenList = {
 
 -- // DATABASE MUTASI SPESIAL //
 local MutasiList = {
-    "Noob", "Fairydust", "Holographic", "Gemstone", "Fire", "Colorburn", "Galaxy", "Sandy", "Albino",
+    "Noob", "Fairydust", "Holographic", "Gemstone", "Fire", "Colorburn", "Galaxy", "Albino", "Frozen", "Bloodmoon", "Festive", "Midnight", "Lightning", "MoonFragment",
 }
 
 -- // DATABASE CHANCE IKAN SECRET //
