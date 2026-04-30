@@ -56,7 +56,7 @@ local ForgottenList = {
 
 -- // DATABASE MUTASI SPESIAL //
 local MutasiList = {
-    "Noob", "Fairydust", "Holographic", "Gemstone", "Fire", "Colorburn", "Galaxy", "Albino", "Frozen", "Bloodmoon", "Festive", "Midnight", "Lightning", "MoonFragment",
+    "Noob", "Fairydust", "Holographic", "Gemstone", "Fire", "Colorburn", "Galaxy", "Midnight", "BloodMoon", "Frozen", "Albino",
 }
 
 -- // DATABASE CHANCE IKAN SECRET //
@@ -326,10 +326,15 @@ local function FindMutasi(fishName)
     local lower = string.lower(fishName)
     for _, mutasiName in ipairs(MutasiList) do
         local mutasiLower = string.lower(mutasiName)
+        local mutasiLen = #mutasiLower
         local s = string.find(lower, mutasiLower, 1, true)
         if s then
-            -- Pastikan mutasi ada di awal nama ikan (sebagai prefix)
-            if s == 1 or lower:sub(s-1, s-1) == " " then
+            local charBefore = s == 1 and " " or lower:sub(s - 1, s - 1)
+            local charAfter  = lower:sub(s + mutasiLen, s + mutasiLen)
+            -- Mutasi harus diawali awal string / spasi DAN diakhiri spasi (bukan bagian dari kata lain)
+            if charBefore == " " and charAfter == " " then
+                return mutasiName
+            elseif s == 1 and charAfter == " " then
                 return mutasiName
             end
         end
@@ -712,17 +717,6 @@ local function StartMonitoring()
             {["name"] = "Username", ["value"] = "**" .. pName .. "**",        ["inline"] = true},
             {["name"] = "Total",    ["value"] = "👥 " .. tostring(totalNow),  ["inline"] = true}
         }, nil, avatarUrl, GetMention(pName))
-
-        task.spawn(function()
-            task.wait(0.3)
-            SendStatsWebhook("📊 PLAYER STATS", nil, 9807270, {
-                {["name"] = "👤 Username",      ["value"] = "**" .. pName .. "**",                 ["inline"] = true},
-                {["name"] = "⏱️ Durasi Sesi",   ["value"] = durationStr,                           ["inline"] = true},
-                {["name"] = "🐟 Total Catch",   ["value"] = tostring(stats.catchCount) .. " ikan", ["inline"] = true},
-                {["name"] = "🕐 Last Fish",     ["value"] = lastFishStr,                           ["inline"] = true},
-                {["name"] = "🐋 Secret Caught", ["value"] = secretStr,                             ["inline"] = false},
-            }, nil, avatarUrl)
-        end)
 
         LeaveTimers[pId] = true
         task.spawn(function()
