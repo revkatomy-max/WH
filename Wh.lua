@@ -20,7 +20,6 @@ local SCRIPT_ACTIVE = false
 
 -- // MEMBER LIST //
 -- Format: { username = "RobloxUsername", display = "DisplayName", id = "DiscordID" }
--- Bisa pakai Username ATAU DisplayName, keduanya akan dikenali
 local MemberList = {
     -- { username = "x_ibo21", display = "Ibo", id = "123456789012345678" },
     -- { username = "PandaBertaring", display = "Panda", id = "987654321098765432" },
@@ -56,8 +55,7 @@ local ForgottenList = {
 
 -- // DATABASE MUTASI SPESIAL //
 local MutasiList = {
-    "Noob", "Fairydust", "Holographic", "Gemstone", "Fire", "Color Burn", "Galaxy", "Midnight", "BloodMoon", "Frozen", "Albino", "Lightning", "Gold",
-}
+    "Noob", "Fairy Dust", "Holographic", "Gemstone", "Fire", "Color Burn", "Galaxy", "Midnight", "BloodMoon", "Frozen", "Lightning", "Gold", "Corrupt",
 
 -- // DATABASE CHANCE IKAN SECRET //
 local FishChanceData = {
@@ -198,7 +196,7 @@ local PlayerNameToId = {}
 local ServerStats = {
     totalSecret = 0,
     totalForgotten = 0,
-    secretLog = {},  -- { fishName, player, time }
+    secretLog = {},
     forgottenLog = {},
     startTime = 0,
 }
@@ -331,7 +329,6 @@ local function FindMutasi(fishName)
         if s then
             local charBefore = s == 1 and " " or lower:sub(s - 1, s - 1)
             local charAfter  = lower:sub(s + mutasiLen, s + mutasiLen)
-            -- Mutasi harus diawali awal string / spasi DAN diakhiri spasi (bukan bagian dari kata lain)
             if charBefore == " " and charAfter == " " then
                 return mutasiName
             elseif s == 1 and charAfter == " " then
@@ -424,6 +421,11 @@ local function ParseChat(rawMsg)
 end
 
 -- // PROSES PESAN CHAT SERVER //
+-- FIX: Urutan pengecekan diperbaiki:
+--   1. Crystalized Legendary
+--   2. Ruby Gemstone
+--   3. Secret Fish (termasuk yang bermutasi) ← PINDAH KE SINI
+--   4. Mutasi non-secret ← TERAKHIR, hanya kalau bukan secret fish
 local function CheckAndSend(rawMsg)
     if not SCRIPT_ACTIVE then return end
     if not string.find(string.lower(rawMsg), "obtained") then return end
@@ -466,7 +468,52 @@ local function CheckAndSend(rawMsg)
         return
     end
 
-    -- // CEK MUTASI SPESIAL //
+    -- // CEK SECRET FISH (termasuk yang bermutasi) //
+    -- Dicek SEBELUM mutasi supaya "Holographic Megalodon" → secret, bukan sekedar mutasi
+    local baseName, mutasi = FindSecretFish(data.fish)
+    if baseName then
+        local imageUrl = FishImageURL[baseName] or (FishImageCache[baseName] and (PROXY .. "/asset/" .. FishImageCache[baseName])) or nil
+
+        local isForgotten = false
+        for _, name in ipairs(ForgottenList) do
+            if string.lower(baseName) == string.lower(name) then isForgotten = true; break end
+        end
+
+        if uid and PlayerStats[uid] then
+            local existing = PlayerStats[uid].secretList[baseName] or 0
+            PlayerStats[uid].secretList[baseName] = existing + 1
+        end
+
+        local chanceInfo = FishChanceData[baseName] or "Unknown"
+        local ikanField = "**" .. data.fish .. "**"
+        local mutasiField = mutasi and ("*" .. mutasi .. "*") or "-"
+
+        if isForgotten then
+            ServerStats.totalForgotten = ServerStats.totalForgotten + 1
+            table.insert(ServerStats.forgottenLog, { fish = baseName, player = data.player, time = os.time() })
+            SendFishWebhook("⚜️ FORGOTTEN TIER DETECTED!", nil, 16777215, {
+                {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
+                {["name"] = "Ikan",    ["value"] = ikanField,                   ["inline"] = true},
+                {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
+                {["name"] = "Berat",   ["value"] = data.weight,                 ["inline"] = true},
+                {["name"] = "Chance",  ["value"] = "🎲 " .. chanceInfo,         ["inline"] = true},
+            }, imageUrl, avatarUrl, GetMention(data.player))
+        else
+            ServerStats.totalSecret = ServerStats.totalSecret + 1
+            table.insert(ServerStats.secretLog, { fish = baseName, player = data.player, time = os.time() })
+            SendFishWebhook("🦕 SECRET FISH DETECTED!", nil, 1752220, {
+                {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
+                {["name"] = "Ikan",    ["value"] = ikanField,                   ["inline"] = true},
+                {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
+                {["name"] = "Berat",   ["value"] = data.weight,                 ["inline"] = true},
+                {["name"] = "Chance",  ["value"] = "🎲 " .. chanceInfo,         ["inline"] = true},
+            }, imageUrl, avatarUrl, GetMention(data.player))
+        end
+        return
+    end
+
+    -- // CEK MUTASI SPESIAL (hanya kalau BUKAN secret fish) //
+    -- Contoh: "Holographic Tuna" → bukan secret → masuk sini
     local mutasiDetected = FindMutasi(data.fish)
     if mutasiDetected then
         SendFishWebhook("✨ MUTASI DETECTED!", nil, 16776960, {
@@ -476,47 +523,6 @@ local function CheckAndSend(rawMsg)
             {["name"] = "Berat",  ["value"] = data.weight,                 ["inline"] = true},
         }, nil, avatarUrl, GetMention(data.player))
         return
-    end
-
-    -- // CEK SECRET FISH //
-    local baseName, mutasi = FindSecretFish(data.fish)
-    if not baseName then return end
-    local imageUrl = FishImageURL[baseName] or (FishImageCache[baseName] and (PROXY .. "/asset/" .. FishImageCache[baseName])) or nil
-
-    local isForgotten = false
-    for _, name in ipairs(ForgottenList) do
-        if string.lower(baseName) == string.lower(name) then isForgotten = true; break end
-    end
-
-    if uid and PlayerStats[uid] then
-        local existing = PlayerStats[uid].secretList[baseName] or 0
-        PlayerStats[uid].secretList[baseName] = existing + 1
-    end
-
-    local chanceInfo = FishChanceData[baseName] or "Unknown"
-    local ikanField = "**" .. data.fish .. "**"
-    local mutasiField = mutasi and ("*" .. mutasi .. "*") or "-"
-
-    if isForgotten then
-        ServerStats.totalForgotten = ServerStats.totalForgotten + 1
-        table.insert(ServerStats.forgottenLog, { fish = baseName, player = data.player, time = os.time() })
-        SendFishWebhook("⚜️ FORGOTTEN TIER DETECTED!", nil, 16777215, {
-            {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
-            {["name"] = "Ikan",    ["value"] = ikanField,                   ["inline"] = true},
-            {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
-            {["name"] = "Berat",   ["value"] = data.weight,                 ["inline"] = true},
-            {["name"] = "Chance",  ["value"] = "🎲 " .. chanceInfo,         ["inline"] = true},
-        }, imageUrl, avatarUrl, GetMention(data.player))
-    else
-        ServerStats.totalSecret = ServerStats.totalSecret + 1
-        table.insert(ServerStats.secretLog, { fish = baseName, player = data.player, time = os.time() })
-        SendFishWebhook("🦕 SECRET FISH DETECTED!", nil, 1752220, {
-            {["name"] = "Pemain",  ["value"] = "**" .. data.player .. "**", ["inline"] = true},
-            {["name"] = "Ikan",    ["value"] = ikanField,                   ["inline"] = true},
-            {["name"] = "Mutasi",  ["value"] = mutasiField,                 ["inline"] = true},
-            {["name"] = "Berat",   ["value"] = data.weight,                 ["inline"] = true},
-            {["name"] = "Chance",  ["value"] = "🎲 " .. chanceInfo,         ["inline"] = true},
-        }, imageUrl, avatarUrl, GetMention(data.player))
     end
 end
 
@@ -540,7 +546,6 @@ local function WatchForFish(player)
         if newBp then WatchBackpack(player, newBp) end
     end)
 end
-
 
 -- // KIRIM LOG CHAT PEMAIN KE WEBHOOK //
 local function SendChatLog(senderName, message)
@@ -583,10 +588,8 @@ local function HookChat()
         TextChatService.MessageReceived:Connect(function(msg)
             local text = msg.Text or ""
             if msg.TextSource == nil then
-                -- Pesan dari system/server
                 CheckAndSend(text)
             else
-                -- Pesan dari pemain
                 local senderName = msg.TextSource and msg.TextSource.Name or "Unknown"
                 SendChatLog(senderName, text)
             end
@@ -598,7 +601,6 @@ local function HookChat()
         if onMessage then
             onMessage.OnClientEvent:Connect(function(d)
                 if d and d.Message then
-                    -- Legacy chat: pesan server biasanya ada prefix [Server] atau "obtained"
                     local lowerMsg = string.lower(d.Message)
                     local isServerMsg = string.find(lowerMsg, "%[server%]")
                         or string.find(lowerMsg, "obtained")
@@ -627,8 +629,7 @@ local function StartMonitoring()
     ServerStats.startTime = os.time()
     HookChat()
 
-
-    -- // KIRIM SERVER STATS TIAP 20 MENIT (TERPISAH) //
+    -- // KIRIM SERVER STATS TIAP 20 MENIT //
     task.spawn(function()
         while SCRIPT_ACTIVE do
             task.wait(1200)
@@ -649,10 +650,10 @@ local function StartMonitoring()
             end
 
             SendStatsWebhook("🌐 SERVER STATS", nil, 3447003, {
-                {["name"] = "⏱️ Uptime Monitor",    ["value"] = uptimeStr,                                                          ["inline"] = true},
-                {["name"] = "🦕 Total Secret Fish",  ["value"] = "**" .. tostring(ServerStats.totalSecret) .. "** ekor",            ["inline"] = true},
-                {["name"] = "⚜️ Total Forgotten",    ["value"] = "**" .. tostring(ServerStats.totalForgotten) .. "** ekor",         ["inline"] = true},
-                {["name"] = "🕐 Secret Terakhir",    ["value"] = #recentSecret > 0 and table.concat(recentSecret, "\n") or "-",    ["inline"] = false},
+                {["name"] = "⏱️ Uptime Monitor",    ["value"] = uptimeStr,                                                             ["inline"] = true},
+                {["name"] = "🦕 Total Secret Fish",  ["value"] = "**" .. tostring(ServerStats.totalSecret) .. "** ekor",               ["inline"] = true},
+                {["name"] = "⚜️ Total Forgotten",    ["value"] = "**" .. tostring(ServerStats.totalForgotten) .. "** ekor",            ["inline"] = true},
+                {["name"] = "🕐 Secret Terakhir",    ["value"] = #recentSecret > 0 and table.concat(recentSecret, "\n") or "-",       ["inline"] = false},
                 {["name"] = "👑 Forgotten Terakhir", ["value"] = #recentForgotten > 0 and table.concat(recentForgotten, "\n") or "-", ["inline"] = false},
             }, nil, nil)
         end
