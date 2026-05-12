@@ -17,43 +17,44 @@ local WEBHOOK_URL       = ""
 local WEBHOOK_STATS     = "https://discord.com/api/webhooks/1488003996026273893/4v2Z-a838D17SL7qn03o8s2PKX3oN2quVIui1g4GmYjrIkgnONbtQUlOGqxkLQLD5eIm"
 local WEBHOOK_FISH      = "https://discord.com/api/webhooks/1488485636024307784/s0tXIAmlnx2OosodZm6FiC3Ny9YT4PzcIDFqUeHXymdVvcKOyuIRVxLPcxE7lsK1IZgb"
 local WEBHOOK_CHAT      = "https://discord.com/api/webhooks/1498573795118678176/oxD9a1iqw2Id7GPY5Qk077bhcN0awn_LWeblphJYUtu6UV7SeH1T_7zP_fhN3yjqCgh2"
+local WEBHOOK_GALATAMA  = "https://discord.com/api/webhooks/1487995039912038481/BqBd5GD0D6lLvE6y5rlGblGNXMl3ScQ8C40fCVXYiTy8YmbVYbbsi8yQOjvuIUNgtz2q"
 local DISCORD_ROLE_ID   = "1489557585764810802"
 local WEBHOOK_AVATAR    = ""
 local PROXY             = "https://square-haze-a007.remediashop.workers.dev"
 local SCRIPT_ACTIVE     = false
 
-local LEADERBOARD_INTERVAL = 1800  -- 30 menit (detik)
+local LEADERBOARD_INTERVAL          = 1800  -- 30 menit
+local LEADERBOARD_GALATAMA_INTERVAL = 1800  -- 30 menit (bisa dibedakan)
 
 -- ============================================================
 --  MEMBER LIST
---  Format: { username = "RobloxUsername", display = "DisplayName", id = "DiscordID" }
 -- ============================================================
 
 local MemberList = {
-    { username = "zupzupzuppasup", display = "RISKAMAUFORGOTTEN", id = "766292778501275678" },
-    { username = "natadecxco", display = "nata", id = "638355599574171668" },
-    { username = "NNOON412", display = "412", id = "1125668364489080933" },
-    { username = "kdryvka", display = "YIYA", id = "1312729486067761162" },
-    { username = "Deff69699", display = "DEF", id = "1407731878756221040" },
-    { username = "fzallzall", display = "Ziell", id = "462346945441038337" },
-    { username = "x_ibo21", display = "wowo", id = "954296542406246400" },
-    { username = "evosudin", display = "Bluuism", id = "875656564931956766" },
-    { username = "minxing_kim", display = "minxing", id = "484295718765461515" },
-    { username = "w4terhyacinth", display = "ReVWater", id = "1309945598409048076" },
-    { username = "sedotanpink", display = "sedotanpink", id = "1406804062825091274" },
-    { username = "dekadekadekk", display = "dekadee", id = "692735562817470494" },
-    { username = "ceriseciscake", display = "ciscake", id = "786950836034994216" },
-    { username = "cobadulumogaseru", display = "lah", id = "1451975194397638676" },
-    { username = "BEJOD06", display = "masw", id = "1222390041951600640" },
-    { username = "flucidious", display = "fluc", id = "279691238494699530" },
-    { username = "hawaish01", display = "ilywaa", id = "1392909983678595244" },
-    { username = "ocheanyx", display = "Michiko", id = "1299617626309263381" },
-    { username = "Reverned99", display = "Reverned99", id = "870201488218157107" },
-    { username = "Leale716", display = "leaa", id = "1408658812424028182" },
+    { username = "zupzupzuppasup",   display = "RISKAMAUFORGOTTEN", id = "766292778501275678" },
+    { username = "natadecxco",       display = "nata",              id = "638355599574171668" },
+    { username = "NNOON412",         display = "412",               id = "1125668364489080933" },
+    { username = "kdryvka",          display = "YIYA",              id = "1312729486067761162" },
+    { username = "Deff69699",        display = "DEF",               id = "1407731878756221040" },
+    { username = "fzallzall",        display = "Ziell",             id = "462346945441038337" },
+    { username = "x_ibo21",          display = "wowo",              id = "954296542406246400" },
+    { username = "evosudin",         display = "Bluuism",           id = "875656564931956766" },
+    { username = "minxing_kim",      display = "minxing",           id = "484295718765461515" },
+    { username = "w4terhyacinth",    display = "ReVWater",          id = "1309945598409048076" },
+    { username = "sedotanpink",      display = "sedotanpink",       id = "1406804062825091274" },
+    { username = "dekadekadekk",     display = "dekadee",           id = "692735562817470494" },
+    { username = "ceriseciscake",    display = "ciscake",           id = "786950836034994216" },
+    { username = "cobadulumogaseru", display = "lah",               id = "1451975194397638676" },
+    { username = "BEJOD06",          display = "masw",              id = "1222390041951600640" },
+    { username = "flucidious",       display = "fluc",              id = "279691238494699530" },
+    { username = "hawaish01",        display = "ilywaa",            id = "1392909983678595244" },
+    { username = "ocheanyx",         display = "Michiko",           id = "1299617626309263381" },
+    { username = "Reverned99",       display = "Reverned99",        id = "870201488218157107" },
+    { username = "Leale716",         display = "leaa",              id = "1408658812424028182" },
 }
 
 -- ============================================================
---  DATABASE
+--  DATABASE — SECRET FISH
 -- ============================================================
 
 local SecretFishList = {
@@ -72,7 +73,6 @@ local SecretFishList = {
     "Mutant Runic Koi", "Ketupat Whale", "Cosmic Mutant Shark", "Strawberry Orca",
     "Bonemaw Tyrant", "Deepsea Monster Axolotl", "Blocky Lochness Monster", "Aurelion",
     "Runic Enchant Stone", "Frogalloon",
-    -- Forgotten Tier
     "Sea Eater", "Thunderzilla", "Iridesca", "Frostbite Leviathan",
 }
 
@@ -81,7 +81,7 @@ local ForgottenList = {
 }
 
 local MutasiList = {
-    "Noob", "Fairy Dust", "Holographic", "Gemstone", "Fire", "Color Burn", "Fozen", 
+    "Noob", "Fairy Dust", "Holographic", "Gemstone", "Fire", "Color Burn", "Fozen",
     "Galaxy", "Midnight", "BloodMoon", "Binary", "Lightning", "Disco", "Festive", "Radioactive",
 }
 
@@ -91,6 +91,41 @@ local LegendaryCrystalList = {
 }
 
 local RubyList = { "Ruby" }
+
+-- ============================================================
+--  GALATAMA EVENT — Ikan & Point
+-- ============================================================
+
+-- Hanya ikan berikut yang masuk sistem point Galatama
+local GalatamaFishList = {
+    "Cryoshade Glider",
+    "Panther Eel",
+    "Giant Squid",
+    "Depthseeker Ray",
+    "Robot Kraken",
+}
+
+-- Point per tangkapan
+local GalatamaPoin = {
+    ["Cryoshade Glider"] = 45,
+    ["Panther Eel"]      = 75,
+    ["Giant Squid"]      = 80,
+    ["Depthseeker Ray"]  = 120,
+    ["Robot Kraken"]     = 350,
+}
+
+-- Rarity display
+local GalatamaRarity = {
+    ["Cryoshade Glider"] = "1 in 450K",
+    ["Panther Eel"]      = "1 in 750K",
+    ["Giant Squid"]      = "1 in 800K",
+    ["Depthseeker Ray"]  = "1 in 1.2M",
+    ["Robot Kraken"]     = "1 in 3.5M",
+}
+
+-- ============================================================
+--  DATABASE — CHANCE & IMAGE
+-- ============================================================
 
 local FishChanceData = {
     ["Crystal Crab"]             = "1 in 750K",
@@ -154,7 +189,7 @@ local FishChanceData = {
     ["Frostbite Leviathan"]      = "1 in 12M",
     ["Aurelion"]                 = "1 in 3M",
     ["Runic Enchant Stone"]      = "1 in 1.50M",
-    ["Frogalloon"]                = "1 in 1,50M",
+    ["Frogalloon"]               = "1 in 1,50M",
 }
 
 local FishImageURL = {
@@ -214,12 +249,15 @@ local FishImageURL = {
 --  STATE / CACHE
 -- ============================================================
 
-local MentionCache    = {}  -- roblox lowercase name → discord id
-local FishImageCache  = {}  -- baseName → asset id (dari backpack)
-local AvatarCache     = {}  -- userId → avatar url
-local LeaveTimers     = {}  -- userId → bool
+local MentionCache    = {}
+local FishImageCache  = {}
+local AvatarCache     = {}
+local LeaveTimers     = {}
 local PlayerStats     = {}  -- userId → { catchCount, secretList, joinTime, lastFishTime, name }
-local PlayerNameToId  = {}  -- lowercase name/display → userId
+local PlayerNameToId  = {}
+
+-- Galatama: userId → { name, totalPoin, catches: { fishName → count } }
+local GalatamaStats   = {}
 
 local ServerStats = {
     totalSecret    = 0,
@@ -239,15 +277,6 @@ local function GetRequestFunc()
         or http_request
         or (fluxus and fluxus.request)
         or request
-end
-
-local function GetServerInfo()
-    local ok1, jobId   = pcall(function() return game.JobId end)
-    local ok2, placeId = pcall(function() return tostring(game.PlaceId) end)
-    local jobStr   = (ok1 and jobId ~= "") and jobId or "Unknown"
-    local placeStr = ok2 and placeId or "Unknown"
-    local rejoinLink = "roblox://experiences/start?placeId=" .. placeStr .. "&gameInstanceId=" .. jobStr
-    return jobStr, placeStr, rejoinLink
 end
 
 local function StripTags(str)
@@ -312,11 +341,9 @@ end
 
 local function FindSecretFish(fishName)
     local lower = string.lower(fishName)
-    -- Pass 1: exact match
     for _, baseName in ipairs(SecretFishList) do
         if lower == string.lower(baseName) then return baseName, nil end
     end
-    -- Pass 2: longest substring match
     local bestBase, bestLen, bestMutasi = nil, 0, nil
     for _, baseName in ipairs(SecretFishList) do
         local s = string.find(lower, string.lower(baseName), 1, true)
@@ -334,6 +361,24 @@ local function FindSecretFish(fishName)
         end
     end
     return bestBase, bestMutasi
+end
+
+-- Deteksi ikan Galatama (exact + substring)
+local function FindGalatamaFish(fishName)
+    local lower = string.lower(fishName)
+    -- Pass 1: exact
+    for _, baseName in ipairs(GalatamaFishList) do
+        if lower == string.lower(baseName) then return baseName end
+    end
+    -- Pass 2: substring (untuk mutasi prefix, e.g. "Galaxy Cryoshade Glider")
+    local bestBase, bestLen = nil, 0
+    for _, baseName in ipairs(GalatamaFishList) do
+        if string.find(lower, string.lower(baseName), 1, true) and #baseName > bestLen then
+            bestLen  = #baseName
+            bestBase = baseName
+        end
+    end
+    return bestBase
 end
 
 local function FindMutasi(fishName)
@@ -355,9 +400,7 @@ end
 
 local function FindRuby(fishName)
     local lower = string.lower(fishName)
-    if string.find(lower, "ruby") and string.find(lower, "gemstone") then
-        return "Ruby"
-    end
+    if string.find(lower, "ruby") and string.find(lower, "gemstone") then return "Ruby" end
     return nil
 end
 
@@ -420,12 +463,11 @@ local function PostWebhook(url, body)
     end)
 end
 
--- captionType: "secret" | "forgotten" | "join" | "leave" | "notback" | nil
 local function BuildContent(mention, captionType)
     if not mention or mention == "" then return nil end
     local m = Trim(mention)
     if captionType == "secret" or captionType == "forgotten" then
-        return "Congress " .. m
+        return "Ingfokan spot pliss " .. m
     elseif captionType == "leave" then
         return "ke disconect ya? " .. m
     elseif captionType == "join" then
@@ -439,11 +481,10 @@ end
 local function SendWebhook(title, description, color, fields, imageUrl, thumbUrl, mention, captionType)
     local f = {}
     for _, v in ipairs(fields) do table.insert(f, v) end
-    local content = BuildContent(mention, captionType)
     PostWebhook(WEBHOOK_URL, {
         username   = "BLOX Gank",
         avatar_url = WEBHOOK_AVATAR,
-        content    = content,
+        content    = BuildContent(mention, captionType),
         embeds     = { BuildEmbed(title, description, color, f, imageUrl, thumbUrl) },
     })
 end
@@ -453,9 +494,8 @@ local function SendFishWebhook(title, description, color, fields, imageUrl, thum
     if url == "" then return end
     local f = {}
     for _, v in ipairs(fields) do table.insert(f, v) end
-    local content = BuildContent(mention, captionType)
     PostWebhook(url, {
-        content = content,
+        content = BuildContent(mention, captionType),
         embeds  = { BuildEmbed(title, description, color, f, imageUrl, thumbUrl) },
     })
 end
@@ -467,9 +507,77 @@ local function SendStatsWebhook(title, description, color, fields, imageUrl, thu
 end
 
 -- ============================================================
---  LEADERBOARD
--- [CHANGE 1] Tambah info "Event Galatama" + mention @role
--- [CHANGE 2] Fungsi ini juga dipanggil saat disconnect (SendFinalLeaderboard)
+--  GALATAMA LEADERBOARD
+-- ============================================================
+
+local function SendGalatamaLeaderboard(isFinal)
+    -- Kumpulkan data dari GalatamaStats
+    local leaderData = {}
+    for uid, gs in pairs(GalatamaStats) do
+        if gs.totalPoin > 0 then
+            -- Susun daftar tangkapan: "Ikan x3 (x pts)"
+            local catchLines = {}
+            for fishName, count in pairs(gs.catches) do
+                local poinPerEkor = GalatamaPoin[fishName] or 0
+                local total       = poinPerEkor * count
+                table.insert(catchLines, fishName .. " x" .. count .. " (+" .. total .. " pts)")
+            end
+            table.insert(leaderData, {
+                name       = gs.name or "Unknown",
+                totalPoin  = gs.totalPoin,
+                catchStr   = #catchLines > 0 and table.concat(catchLines, "\n") or "-",
+            })
+        end
+    end
+
+    if #leaderData == 0 then return end
+
+    table.sort(leaderData, function(a, b) return a.totalPoin > b.totalPoin end)
+
+    local medals = { "🥇", "🥈", "🥉" }
+    local lines  = {}
+    for i, entry in ipairs(leaderData) do
+        if i > 10 then break end
+        local medal = medals[i] or ("**#" .. i .. "**")
+        table.insert(lines,
+            medal .. " **" .. entry.name .. "** — 🏅 **" .. entry.totalPoin .. " pts**\n"
+            .. "↳ " .. entry.catchStr
+        )
+    end
+
+    local uptime      = os.time() - ServerStats.startTime
+    local roleMention = (DISCORD_ROLE_ID ~= "") and ("<@&" .. DISCORD_ROLE_ID .. ">") or ""
+    local title       = isFinal
+        and "🏆 LEADERBOARD FINAL GALATAMA"
+        or  "🏆 LEADERBOARD GALATAMA — UPDATE"
+
+    local contentMsg = isFinal
+        and (roleMention ~= "" and roleMention .. " 📢 **Hasil Akhir Event Galatama!** Monitor disconnect." or nil)
+        or  (roleMention ~= "" and roleMention .. " 📊 **Update Leaderboard Galatama!**" or nil)
+
+    -- Tabel point referensi di footer description
+    local pointRef = "```\nTabel Point Galatama:\n"
+        .. "Cryoshade Glider  (1 in 450K) =  45 pts\n"
+        .. "Panther Eel       (1 in 750K) =  75 pts\n"
+        .. "Giant Squid       (1 in 800K) =  80 pts\n"
+        .. "Depthseeker Ray   (1 in 1.2M) = 120 pts\n"
+        .. "Robot Kraken      (1 in 3.5M) = 350 pts\n"
+        .. "```"
+
+    local desc = table.concat(lines, "\n\n") .. "\n\n" .. pointRef
+
+    PostWebhook(WEBHOOK_GALATAMA, {
+        content = contentMsg,
+        embeds  = { BuildEmbed(title, desc, 16766720, {
+            { name = "🎪 Event",           value = "**Galatama**",                                            inline = true },
+            { name = "⏱️ Uptime",          value = UptimeString(uptime),                                      inline = true },
+            { name = "🦕 Total Secret",    value = "**" .. tostring(ServerStats.totalSecret) .. "** ekor",    inline = true },
+        }, nil, nil, "BLOX Gank Galatama") },
+    })
+end
+
+-- ============================================================
+--  LEADERBOARD SECRET (biasa)
 -- ============================================================
 
 local function BuildLeaderboardData()
@@ -504,15 +612,11 @@ local function SendLeaderboard(isFinal)
         table.insert(lines, medal .. " **" .. entry.name .. "** — " .. entry.total .. " secret\n↳ " .. entry.fishStr)
     end
 
-    local uptime = os.time() - ServerStats.startTime
-
-    -- [CHANGE 1] Judul berbeda kalau final (disconnect), tambah info Event Galatama
-    local title = isFinal
+    local uptime      = os.time() - ServerStats.startTime
+    local roleMention = (DISCORD_ROLE_ID ~= "") and ("<@&" .. DISCORD_ROLE_ID .. ">") or ""
+    local title       = isFinal
         and "🏆 LEADERBOARD FINAL — EVENT GALATAMA"
         or  "🏆 LEADERBOARD SECRET FISH — EVENT GALATAMA"
-
-    -- [CHANGE 1] Mention @role di content agar semua member notif
-    local roleMention = (DISCORD_ROLE_ID ~= "") and ("<@&" .. DISCORD_ROLE_ID .. ">") or ""
     local contentMsg  = isFinal
         and (roleMention ~= "" and roleMention .. " 📢 **Leaderboard Final Event Galatama!** Monitor disconnect." or nil)
         or  (roleMention ~= "" and roleMention .. " 📊 **Update Leaderboard Event Galatama!**" or nil)
@@ -522,18 +626,19 @@ local function SendLeaderboard(isFinal)
 
     PostWebhook(statsUrl, {
         content = contentMsg,
-        embeds  = { BuildEmbed(title, table.concat(lines, "\n\n"), 16766720, {
-            { name = "🎪 Event",           value = "**Galatama**",                                                   inline = true  },
-            { name = "⏱️ Uptime",          value = UptimeString(uptime),                                             inline = true  },
-            { name = "🦕 Total Secret",    value = "**" .. tostring(ServerStats.totalSecret) .. "** ekor",           inline = true  },
-            { name = "⚜️ Total Forgotten", value = "**" .. tostring(ServerStats.totalForgotten) .. "** ekor",        inline = true  },
+        embeds  = { BuildEmbed(title, table.concat(lines, "\n\n"), 3066993, {
+            { name = "🎪 Event",           value = "**Galatama**",                                                    inline = true },
+            { name = "⏱️ Uptime",          value = UptimeString(uptime),                                              inline = true },
+            { name = "🦕 Total Secret",    value = "**" .. tostring(ServerStats.totalSecret) .. "** ekor",            inline = true },
+            { name = "⚜️ Total Forgotten", value = "**" .. tostring(ServerStats.totalForgotten) .. "** ekor",         inline = true },
         }, nil, nil, "BLOX Gank Stats") },
     })
 end
 
--- [CHANGE 2] Kirim leaderboard final sebelum disconnect/game close
+-- Kirim kedua leaderboard saat final/disconnect
 local function SendFinalLeaderboard()
     SendLeaderboard(true)
+    SendGalatamaLeaderboard(true)
 end
 
 -- ============================================================
@@ -583,6 +688,11 @@ local function CheckAndSend(rawMsg)
         end
         PlayerStats[uid].catchCount   = PlayerStats[uid].catchCount + 1
         PlayerStats[uid].lastFishTime = os.time()
+
+        -- Init GalatamaStats jika belum ada
+        if not GalatamaStats[uid] then
+            GalatamaStats[uid] = { name = data.player, totalPoin = 0, catches = {} }
+        end
     end
 
     -- 1. Crystalized Legendary
@@ -612,7 +722,7 @@ local function CheckAndSend(rawMsg)
         return
     end
 
-    -- 3. Secret Fish (includes mutated variants)
+    -- 3. Secret Fish (termasuk cek Galatama point)
     local baseName, mutasi = FindSecretFish(data.fish)
     if baseName then
         local imageUrl = FishImageURL[baseName]
@@ -627,8 +737,19 @@ local function CheckAndSend(rawMsg)
             PlayerStats[uid].secretList[baseName] = (PlayerStats[uid].secretList[baseName] or 0) + 1
         end
 
+        -- Cek apakah ikan ini masuk Galatama & tambah point
+        local galatamaBase = FindGalatamaFish(data.fish)
+        local galaPoint    = galatamaBase and GalatamaPoin[galatamaBase] or 0
+        if galatamaBase and galaPoint > 0 and uid and GalatamaStats[uid] then
+            GalatamaStats[uid].catches[galatamaBase]  = (GalatamaStats[uid].catches[galatamaBase] or 0) + 1
+            GalatamaStats[uid].totalPoin              = GalatamaStats[uid].totalPoin + galaPoint
+            GalatamaStats[uid].name                   = data.player
+        end
+
         local chanceInfo  = FishChanceData[baseName] or "Unknown"
         local mutasiField = mutasi and ("*" .. mutasi .. "*") or "-"
+
+        -- Field point Galatama (ditampilkan jika ikan masuk event)
         local fields = {
             { name = "Pemain", value = "**" .. data.player .. "**", inline = true },
             { name = "Ikan",   value = "**" .. data.fish .. "**",   inline = true },
@@ -636,6 +757,14 @@ local function CheckAndSend(rawMsg)
             { name = "Berat",  value = data.weight,                  inline = true },
             { name = "Chance", value = "🎲 " .. chanceInfo,          inline = true },
         }
+
+        if galatamaBase and galaPoint > 0 then
+            table.insert(fields, {
+                name   = "🏅 Galatama",
+                value  = "**+" .. galaPoint .. " pts** (total: " .. (GalatamaStats[uid] and GalatamaStats[uid].totalPoin or galaPoint) .. " pts)",
+                inline = true
+            })
+        end
 
         if isForgotten then
             ServerStats.totalForgotten = ServerStats.totalForgotten + 1
@@ -649,7 +778,7 @@ local function CheckAndSend(rawMsg)
         return
     end
 
-    -- 4. Mutasi non-secret only
+    -- 4. Mutasi non-secret
     local mutasiDetected = FindMutasi(data.fish)
     if mutasiDetected then
         SendFishWebhook("✨ MUTASI DETECTED!", nil, 16776960, {
@@ -693,10 +822,8 @@ local function SendChatLog(senderName, message)
     if not SCRIPT_ACTIVE or not message or message == "" then return end
     local url = (WEBHOOK_CHAT ~= "") and WEBHOOK_CHAT or WEBHOOK_URL
     if url == "" then return end
-
     local player   = FindPlayer(senderName)
     local thumbUrl = player and (AvatarCache[player.UserId] or GetAvatarUrl(player)) or nil
-
     PostWebhook(url, {
         username   = "BLOX Gank",
         avatar_url = WEBHOOK_AVATAR,
@@ -712,7 +839,6 @@ end
 -- ============================================================
 
 local function HookChat()
-    -- TextChatService (new system)
     if TextChatService then
         TextChatService.MessageReceived:Connect(function(msg)
             local text = msg.Text or ""
@@ -725,7 +851,6 @@ local function HookChat()
         end)
     end
 
-    -- Legacy chat system
     local chatEvents = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
     if chatEvents then
         local onMessage = chatEvents:FindFirstChild("OnMessageDoneFiltering")
@@ -756,25 +881,30 @@ local function StartMonitoring()
     local names      = {}
     for _, p in ipairs(allPlayers) do table.insert(names, p.Name) end
 
-    SendWebhook("🎣 WEBHOOK STARTED", nil, 65280, {
+    SendWebhook("🎣 WEBHOOK STARTED — EVENT GALATAMA", nil, 65280, {
         { name = "Host",          value = "👤 " .. Players.LocalPlayer.Name,            inline = true  },
         { name = "Total Player",  value = "👥 " .. tostring(#allPlayers),                inline = true  },
         { name = "Daftar Player", value = "```\n" .. table.concat(names, ", ") .. "```", inline = false },
+        { name = "🏅 Ikan Galatama", value =
+            "Cryoshade Glider → **45 pts**\n" ..
+            "Panther Eel → **75 pts**\n" ..
+            "Giant Squid → **80 pts**\n" ..
+            "Depthseeker Ray → **120 pts**\n" ..
+            "Robot Kraken → **350 pts**",
+          inline = false },
     })
 
     HookChat()
 
-    -- [CHANGE 2] Kirim leaderboard final saat pemegang script akan disconnect dari game
+    -- Kirim kedua leaderboard saat disconnect
     game:GetService("Players").LocalPlayer.AncestryChanged:Connect(function(_, parent)
         if parent == nil and SCRIPT_ACTIVE then
             SendFinalLeaderboard()
         end
     end)
 
-    -- [CHANGE 2] Fallback: deteksi karakter di-remove (kick/leave)
     local localPlayer = Players.LocalPlayer
     localPlayer.CharacterRemoving:Connect(function()
-        -- Cek apakah player benar-benar leaving (bukan hanya respawn)
         task.delay(2, function()
             if not localPlayer.Parent then
                 SendFinalLeaderboard()
@@ -782,7 +912,7 @@ local function StartMonitoring()
         end)
     end)
 
-    -- Leaderboard every 30 minutes
+    -- Leaderboard secret biasa setiap 30 menit
     task.spawn(function()
         while SCRIPT_ACTIVE do
             task.wait(LEADERBOARD_INTERVAL)
@@ -790,14 +920,21 @@ local function StartMonitoring()
         end
     end)
 
-    -- Server stats every 20 minutes
+    -- Leaderboard Galatama setiap 30 menit
+    task.spawn(function()
+        while SCRIPT_ACTIVE do
+            task.wait(LEADERBOARD_GALATAMA_INTERVAL)
+            if SCRIPT_ACTIVE then SendGalatamaLeaderboard(false) end
+        end
+    end)
+
+    -- Server stats setiap 20 menit
     task.spawn(function()
         while SCRIPT_ACTIVE do
             task.wait(1200)
             if not SCRIPT_ACTIVE then break end
 
             local uptime = os.time() - ServerStats.startTime
-
             local recentSecret, recentForgotten = {}, {}
             for i = math.max(1, #ServerStats.secretLog - 4), #ServerStats.secretLog do
                 local e = ServerStats.secretLog[i]
@@ -823,6 +960,7 @@ local function StartMonitoring()
         WatchForFish(p)
         AvatarCache[p.UserId]                       = GetAvatarUrl(p)
         PlayerStats[p.UserId]                       = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = p.Name }
+        GalatamaStats[p.UserId]                     = { name = p.Name, totalPoin = 0, catches = {} }
         PlayerNameToId[string.lower(p.Name)]        = p.UserId
         PlayerNameToId[string.lower(p.DisplayName)] = p.UserId
         BuildMentionCache(p.Name, p.DisplayName)
@@ -831,7 +969,8 @@ local function StartMonitoring()
     Players.PlayerAdded:Connect(function(player)
         if not SCRIPT_ACTIVE then return end
         LeaveTimers[player.UserId] = nil
-        PlayerStats[player.UserId] = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = player.Name }
+        PlayerStats[player.UserId]   = { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil, name = player.Name }
+        GalatamaStats[player.UserId] = { name = player.Name, totalPoin = 0, catches = {} }
         PlayerNameToId[string.lower(player.Name)]        = player.UserId
         PlayerNameToId[string.lower(player.DisplayName)] = player.UserId
         BuildMentionCache(player.Name, player.DisplayName)
@@ -851,16 +990,15 @@ local function StartMonitoring()
     Players.PlayerRemoving:Connect(function(player)
         if not SCRIPT_ACTIVE then return end
 
-        local pName     = player.Name
-        local pId       = player.UserId
-        local avatarUrl = AvatarCache[pId] or GetAvatarUrl(player)
-        local stats     = PlayerStats[pId] or { catchCount = 0, secretList = {}, joinTime = os.time(), lastFishTime = nil }
-        local totalNow  = #Players:GetPlayers() - 1
+        local pName      = player.Name
+        local pId        = player.UserId
+        local avatarUrl  = AvatarCache[pId] or GetAvatarUrl(player)
+        local totalNow   = #Players:GetPlayers() - 1
         local mentionStr = GetMention(pName)
 
-        -- Clear caches
         AvatarCache[pId]                    = nil
         PlayerStats[pId]                    = nil
+        GalatamaStats[pId]                  = nil
         PlayerNameToId[string.lower(pName)] = nil
         for k, v in pairs(PlayerNameToId) do if v == pId then PlayerNameToId[k] = nil end end
         MentionCache[string.lower(pName)]   = nil
@@ -875,11 +1013,10 @@ local function StartMonitoring()
             task.wait(600)
             if LeaveTimers[pId] then
                 LeaveTimers[pId] = nil
-                local notBackContent = BuildContent(mentionStr, "notback")
                 PostWebhook(WEBHOOK_URL, {
                     username   = "BLOX Gank",
                     avatar_url = WEBHOOK_AVATAR,
-                    content    = notBackContent,
+                    content    = BuildContent(mentionStr, "notback"),
                     embeds     = { BuildEmbed("⏰ PLAYER TIDAK KEMBALI", nil, 16711680, {
                         { name = "Username", value = "**" .. pName .. "**",               inline = true },
                         { name = "Info",     value = "Tidak kembali selama **10 menit**", inline = true },
@@ -900,10 +1037,9 @@ local function CreateUI()
     gui.ResetOnSpawn = false
     gui.Parent       = (gethui and gethui()) or CoreGui
 
-    -- Main frame
     local frame = Instance.new("Frame")
     frame.Name             = "Main"
-    frame.Size             = UDim2.new(0, 300, 0, 400)  -- sedikit lebih tinggi untuk tombol edit
+    frame.Size             = UDim2.new(0, 300, 0, 420)
     frame.Position         = UDim2.new(0.5, -150, 0.5, -90)
     frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     frame.BorderSizePixel  = 0
@@ -915,7 +1051,6 @@ local function CreateUI()
     stroke.Thickness = 1
     stroke.Parent    = frame
 
-    -- Top bar
     local topBar = Instance.new("Frame")
     topBar.Size             = UDim2.new(1, 0, 0, 36)
     topBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -931,7 +1066,7 @@ local function CreateUI()
     topBarFix.Parent           = topBar
 
     local title = Instance.new("TextLabel")
-    title.Text              = "🎣 BLOX Gank Monitor"
+    title.Text              = "🎣 BLOX Gank — Galatama"
     title.Size              = UDim2.new(1, -80, 1, 0)
     title.Position          = UDim2.new(0, 10, 0, 0)
     title.BackgroundTransparency = 1
@@ -960,7 +1095,7 @@ local function CreateUI()
     local closeBtn = MakeWinBtn("✕", -28, Color3.fromRGB(200, 50, 50))
 
     local isMinimized = false
-    local fullSize    = UDim2.new(0, 300, 0, 400)
+    local fullSize    = UDim2.new(0, 300, 0, 420)
     local miniSize    = UDim2.new(0, 300, 0, 36)
 
     minBtn.MouseButton1Click:Connect(function()
@@ -985,7 +1120,6 @@ local function CreateUI()
     HoverTween(minBtn,   Color3.fromRGB(80, 80, 80),   Color3.fromRGB(60, 60, 60))
     HoverTween(closeBtn, Color3.fromRGB(230, 70, 70),  Color3.fromRGB(200, 50, 50))
 
-    -- Drag
     local dragging, dragStart, startPos
     topBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -1004,7 +1138,6 @@ local function CreateUI()
         end
     end)
 
-    -- Status dot + label
     local statusDot = Instance.new("Frame")
     statusDot.Size             = UDim2.new(0, 8, 0, 8)
     statusDot.Position         = UDim2.new(0, 16, 0, 46)
@@ -1067,19 +1200,18 @@ local function CreateUI()
     local inputFish  = MakeInput("Paste webhook secret fish...", 124)
     MakeLabel("📊 Webhook Stats", 162)
     local inputStats = MakeInput("Paste webhook stats...", 176)
-    MakeLabel("💬 Webhook Chat Log", 214)
-    local inputChat  = MakeInput("Paste webhook chat log...", 228)
-    MakeLabel("🔔 Discord Role ID (opsional)", 252)
-    local inputRole  = MakeInput("Masukkan Role ID...", 266)
+    MakeLabel("💬 Webhook Chat Log", 210)
+    local inputChat  = MakeInput("Paste webhook chat log...", 224)
+    MakeLabel("🔔 Discord Role ID (opsional)", 258)
+    local inputRole  = MakeInput("Masukkan Role ID...", 272)
 
-    -- All input boxes reference
-    local allInputs = {inputJoin, inputFish, inputStats, inputChat, inputRole}
+    local allInputs = { inputJoin, inputFish, inputStats, inputChat, inputRole }
 
-    -- Start button
+    -- START button
     local startBtn = Instance.new("TextButton")
     startBtn.Text             = "START MONITORING"
     startBtn.Size             = UDim2.new(1, -24, 0, 32)
-    startBtn.Position         = UDim2.new(0, 12, 0, 304)
+    startBtn.Position         = UDim2.new(0, 12, 0, 312)
     startBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
     startBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
     startBtn.Font             = Enum.Font.GothamBold
@@ -1088,43 +1220,65 @@ local function CreateUI()
     startBtn.Parent           = frame
     Instance.new("UICorner", startBtn).CornerRadius = UDim.new(0, 6)
 
-    -- [CHANGE 3] Tombol Edit Webhook (muncul setelah monitoring aktif)
+    -- EDIT WEBHOOK button
     local editBtn = Instance.new("TextButton")
     editBtn.Text             = "✏️ UBAH WEBHOOK"
-    editBtn.Size             = UDim2.new(1, -24, 0, 32)
-    editBtn.Position         = UDim2.new(0, 12, 0, 344)
+    editBtn.Size             = UDim2.new(0.48, -12, 0, 32)
+    editBtn.Position         = UDim2.new(0, 12, 0, 352)
     editBtn.BackgroundColor3 = Color3.fromRGB(60, 100, 180)
     editBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
     editBtn.Font             = Enum.Font.GothamBold
-    editBtn.TextSize         = 11
+    editBtn.TextSize         = 10
     editBtn.BorderSizePixel  = 0
-    editBtn.Visible          = false  -- hidden sampai monitoring aktif
+    editBtn.Visible          = false
     editBtn.Parent           = frame
     Instance.new("UICorner", editBtn).CornerRadius = UDim.new(0, 6)
 
+    -- SEND GALATAMA LB button (manual trigger)
+    local galaBtn = Instance.new("TextButton")
+    galaBtn.Text             = "🏅 LB GALATAMA"
+    galaBtn.Size             = UDim2.new(0.48, -12, 0, 32)
+    galaBtn.Position         = UDim2.new(0.52, 0, 0, 352)
+    galaBtn.BackgroundColor3 = Color3.fromRGB(160, 100, 0)
+    galaBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
+    galaBtn.Font             = Enum.Font.GothamBold
+    galaBtn.TextSize         = 10
+    galaBtn.BorderSizePixel  = 0
+    galaBtn.Visible          = false
+    galaBtn.Parent           = frame
+    Instance.new("UICorner", galaBtn).CornerRadius = UDim.new(0, 6)
+
     HoverTween(startBtn, Color3.fromRGB(0, 210, 120),  Color3.fromRGB(0, 180, 100))
     HoverTween(editBtn,  Color3.fromRGB(80, 130, 210), Color3.fromRGB(60, 100, 180))
+    HoverTween(galaBtn,  Color3.fromRGB(200, 130, 0),  Color3.fromRGB(160, 100, 0))
 
-    -- [CHANGE 3] Toggle edit mode
+    -- Manual kirim leaderboard Galatama
+    galaBtn.MouseButton1Click:Connect(function()
+        if not SCRIPT_ACTIVE then return end
+        galaBtn.Text = "⏳ Mengirim..."
+        SendGalatamaLeaderboard(false)
+        task.wait(2)
+        galaBtn.Text = "🏅 LB GALATAMA"
+    end)
+
+    -- Edit webhook toggle
     local isEditing = false
     editBtn.MouseButton1Click:Connect(function()
         if not SCRIPT_ACTIVE then return end
         isEditing = not isEditing
 
         if isEditing then
-            -- Aktifkan input agar bisa diedit
             for _, box in ipairs(allInputs) do
-                box.TextEditable      = true
-                box.BackgroundColor3  = Color3.fromRGB(50, 50, 30)
+                box.TextEditable     = true
+                box.BackgroundColor3 = Color3.fromRGB(50, 50, 30)
             end
-            editBtn.Text             = "💾 SIMPAN PERUBAHAN"
+            editBtn.Text             = "💾 SIMPAN"
             editBtn.BackgroundColor3 = Color3.fromRGB(180, 140, 0)
         else
-            -- Simpan & kunci kembali
-            if inputJoin.Text:find("discord.com/api/webhooks")  then WEBHOOK_URL   = inputJoin.Text  end
-            if inputFish.Text:find("discord.com/api/webhooks")  then WEBHOOK_FISH  = inputFish.Text  end
-            if inputStats.Text:find("discord.com/api/webhooks") then WEBHOOK_STATS = inputStats.Text end
-            if inputChat.Text:find("discord.com/api/webhooks")  then WEBHOOK_CHAT  = inputChat.Text  end
+            if inputJoin.Text:find("discord.com/api/webhooks")  then WEBHOOK_URL      = inputJoin.Text  end
+            if inputFish.Text:find("discord.com/api/webhooks")  then WEBHOOK_FISH     = inputFish.Text  end
+            if inputStats.Text:find("discord.com/api/webhooks") then WEBHOOK_STATS    = inputStats.Text end
+            if inputChat.Text:find("discord.com/api/webhooks")  then WEBHOOK_CHAT     = inputChat.Text  end
             local roleText = Trim(inputRole.Text)
             if roleText ~= "" then DISCORD_ROLE_ID = roleText end
 
@@ -1135,7 +1289,6 @@ local function CreateUI()
             editBtn.Text             = "✏️ UBAH WEBHOOK"
             editBtn.BackgroundColor3 = Color3.fromRGB(60, 100, 180)
 
-            -- Kirim notif ke Discord bahwa webhook diupdate
             PostWebhook(WEBHOOK_URL ~= "" and WEBHOOK_URL or WEBHOOK_STATS, {
                 username = "BLOX Gank",
                 embeds   = { BuildEmbed("⚙️ WEBHOOK DIPERBARUI", nil, 16776960, {
@@ -1161,23 +1314,20 @@ local function CreateUI()
         if inputFish.Text:find("discord.com/api/webhooks")  then WEBHOOK_FISH  = inputFish.Text  end
         if inputStats.Text:find("discord.com/api/webhooks") then WEBHOOK_STATS = inputStats.Text end
         if inputChat.Text:find("discord.com/api/webhooks")  then WEBHOOK_CHAT  = inputChat.Text  end
-
         local roleText = Trim(inputRole.Text)
         if roleText ~= "" then DISCORD_ROLE_ID = roleText end
 
         SCRIPT_ACTIVE = true
         statusDot.BackgroundColor3 = Color3.fromRGB(0, 220, 100)
-        statusLabel.Text           = "Aktif — Monitoring..."
+        statusLabel.Text           = "Aktif — Monitoring Galatama..."
         statusLabel.TextColor3     = Color3.fromRGB(0, 220, 100)
         startBtn.Text              = "✅ MONITORING AKTIF"
         startBtn.BackgroundColor3  = Color3.fromRGB(30, 30, 30)
 
-        for _, box in ipairs(allInputs) do
-            box.TextEditable = false
-        end
+        for _, box in ipairs(allInputs) do box.TextEditable = false end
 
-        -- [CHANGE 3] Tampilkan tombol edit setelah aktif
         editBtn.Visible = true
+        galaBtn.Visible = true
 
         StartMonitoring()
     end)
