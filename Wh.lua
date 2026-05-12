@@ -23,34 +23,15 @@ local WEBHOOK_AVATAR    = ""
 local PROXY             = "https://square-haze-a007.remediashop.workers.dev"
 local SCRIPT_ACTIVE     = false
 
-local LEADERBOARD_INTERVAL          = 1800  -- 30 menit
-local LEADERBOARD_GALATAMA_INTERVAL = 1800  -- 30 menit (bisa dibedakan)
+local LEADERBOARD_INTERVAL          = 1200  -- 30 menit
+local LEADERBOARD_GALATAMA_INTERVAL = 1200  -- 30 menit (bisa dibedakan)
 
 -- ============================================================
 --  MEMBER LIST
 -- ============================================================
 
 local MemberList = {
-    { username = "zupzupzuppasup",   display = "RISKAMAUFORGOTTEN", id = "766292778501275678" },
-    { username = "natadecxco",       display = "nata",              id = "638355599574171668" },
-    { username = "NNOON412",         display = "412",               id = "1125668364489080933" },
-    { username = "kdryvka",          display = "YIYA",              id = "1312729486067761162" },
-    { username = "Deff69699",        display = "DEF",               id = "1407731878756221040" },
-    { username = "fzallzall",        display = "Ziell",             id = "462346945441038337" },
-    { username = "x_ibo21",          display = "wowo",              id = "954296542406246400" },
-    { username = "evosudin",         display = "Bluuism",           id = "875656564931956766" },
-    { username = "minxing_kim",      display = "minxing",           id = "484295718765461515" },
-    { username = "w4terhyacinth",    display = "ReVWater",          id = "1309945598409048076" },
-    { username = "sedotanpink",      display = "sedotanpink",       id = "1406804062825091274" },
-    { username = "dekadekadekk",     display = "dekadee",           id = "692735562817470494" },
-    { username = "ceriseciscake",    display = "ciscake",           id = "786950836034994216" },
-    { username = "cobadulumogaseru", display = "lah",               id = "1451975194397638676" },
-    { username = "BEJOD06",          display = "masw",              id = "1222390041951600640" },
-    { username = "flucidious",       display = "fluc",              id = "279691238494699530" },
-    { username = "hawaish01",        display = "ilywaa",            id = "1392909983678595244" },
-    { username = "ocheanyx",         display = "Michiko",           id = "1299617626309263381" },
-    { username = "Reverned99",       display = "Reverned99",        id = "870201488218157107" },
-    { username = "Leale716",         display = "leaa",              id = "1408658812424028182" },
+   
 }
 
 -- ============================================================
